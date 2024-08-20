@@ -59,5 +59,5 @@ class T1InterPacketTimes:
 
         # Convert each character in the text to its ASCII value and then to binary
         binary_representation = ''.join(format(ord(char), '07b') for char in steganography_message)
-        logging.info(f"binary representation of steganography message is: {binary_representation}")
+        logging.info(f"binary embedded message (without header): {binary_representation}")
         return length_binary + binary_representation

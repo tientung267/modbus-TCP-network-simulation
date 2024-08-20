@@ -99,7 +99,7 @@ class S1SizeModulation:
         # Convert each character in the text to its ASCII value and then to binary
         binary_representation = ''.join(format(ord(char), '07b') for char in steganography_message)
         self._embedded_message = length_binary + binary_representation
-        logging.info(f"embedded message {self._embedded_message}")
+        logging.info(f"embedded message (without header) {binary_representation}")
 
     @property
     def embedded_message(self):

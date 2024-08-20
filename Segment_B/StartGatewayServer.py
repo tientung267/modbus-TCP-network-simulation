@@ -21,7 +21,8 @@ FUNCTION_CODE = 3
 S1_STEG_MESS = "this steganography message will be embedded with S1 method"
 T1_STEG_MESS = "this steganography message will be embedded with T1 method"
 SLEEP_DURATION = 1
-
+NUM_BITS_CHARACTER = 7  # each character in hidden message is represented by 7 bits (number in ASCII table)
+NUM_BITS_HEADER = 10  # 10 first bits in embedded message represents number of bits following (max 1023 bits)
 
 def mbap_header_logging(transaction_id, protocol_id, length, unit_id):
     """Log out the header of a modbus/TCP packet"""
@@ -74,20 +75,20 @@ def handle_client(client_socket, server_address):
     steg_s1 = None
     steg_t1 = None
     num_bits_embed = 0
-    if os.getenv('APPLY_SIZE_MODULATION', False):
+    if os.getenv('APPLY_SIZE_MODULATION', True):
         steg_s1 = S1SizeModulation()
         steg_s1.set_embedded_message(S1_STEG_MESS)
         logging.info("applying size modulation")
         # Each character in steganography will be encoded by 8 bits, which represent ASCII number of that character.
         # 8 first bits represent number of characters in the message
-        num_bits_embed = len(S1_STEG_MESS) * 8 + 8
+        num_bits_embed = len(S1_STEG_MESS) * NUM_BITS_CHARACTER + NUM_BITS_HEADER
 
-    if os.getenv('APPLY_INTER_PACKET_TIMES', True):
+    if os.getenv('APPLY_INTER_PACKET_TIMES', False):
         steg_t1 = T1InterPacketTimes(T1_STEG_MESS)
 
         # Each character in steganography will be encoded by 8 bits, which represent ASCII number of that character.
         # 8 first bits represent number of characters in the message
-        num_bits_embed = len(T1_STEG_MESS) * 8 + 8
+        num_bits_embed = len(T1_STEG_MESS) * NUM_BITS_CHARACTER + NUM_BITS_HEADER
     try:
         while True:
             # receive request from client
@@ -127,7 +128,7 @@ def handle_client(client_socket, server_address):
             if not (steg_t1 is None):
                 # Check if steganography delaying is applicable.
                 # Delaying is only applicable, if network throttling is not occurring
-                if num_bits_embed > 0:  # not steg_t1.check_in_throttling_period() and
+                if num_bits_embed > 0:
                     steg_t1.apply_delay(function_code)
                     num_bits_embed -= 1
 
