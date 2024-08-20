@@ -99,10 +99,10 @@ class CustomModbusClient(BaseModbusClient):
             try:
                 self._sock = socket.socket(af, sock_type, proto)
                 modbus_client_name = os.getenv('MODBUS_CLIENT_NAME', 'localhost')
-                modbus_client_port = os.getenv('MODBUS_CLIENT_PORT', 0000)
-                logging.info(f"from {modbus_client_name}:3000")
-                if modbus_client_port != 0000:
-                    self._sock.bind((modbus_client_name, modbus_client_port))
+                modbus_client_port = os.getenv('MODBUS_CLIENT_PORT', 3000)
+
+                logging.info(f"from {modbus_client_name}:{modbus_client_port}")
+                self._sock.bind((modbus_client_name, modbus_client_port))
             except socket.error:
                 continue
             try:
