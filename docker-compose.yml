@@ -1,0 +1,39 @@
+services:
+  modbus-server:
+    image: tientungnguyen/modbus-server-image:0.0.1
+    container_name: modbus-server
+    ports:
+      - "502:502"
+    environment:
+      - MODBUS_SERVER_NAME=modbus-server
+    volumes:
+      - modbus-network-data:/app/logs
+    command: sh -c "python StartServer.py > /app/logs/modbus-server.log 2>&1"
+  gateway-server:
+    image: tientungnguyen/gateway-server-image:0.0.1
+    container_name: gateway-server
+    ports:
+      - "500:500"
+    environment:
+      - GATEWAY_SERVER_NAME=gateway-server
+      - MODBUS_SERVER_NAME=modbus-server
+    depends_on:
+      - modbus-server
+    volumes:
+      - modbus-network-data:/app/logs
+    command: sh -c "python StartGatewayServer.py > /app/logs/gateway-server.log 2>&1"
+  modbus-client:
+    image: tientungnguyen/modbus-client-image:0.0.1
+    container_name: modbus-client
+    ports:
+      - "3000:3000"
+    environment:
+      - MODBUS_CLIENT_NAME=modbus-client
+      - GATEWAY_SERVER_NAME=gateway-server
+    depends_on:
+      - gateway-server
+    volumes:
+      - modbus-network-data:/app/logs
+    command: sh -c "python StartClient.py > /app/logs/modbus-client.log 2>&1"
+volumes:
+  modbus-network-data:
