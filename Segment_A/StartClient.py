@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 gateway_server = os.getenv('GATEWAY_SERVER_NAME', 'localhost')
 SERVER_PORT = 500
-REQUEST_DURATION = 600
+REQUEST_DURATION = 1800
 
 client = CustomModbusClient(host=gateway_server, port=SERVER_PORT, auto_open=True)
 

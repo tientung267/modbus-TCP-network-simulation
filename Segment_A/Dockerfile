@@ -5,19 +5,20 @@ FROM python:3.11-slim
 WORKDIR /app
 ## After step 2 every thing happen inside /app
 
-#copy content of current directory(Segment_c) folder into /app directory
+## 3. copy content of current directory(Segment_c) folder into /app directory
 COPY . .
 
-
-### 4. Install the dependencies
+## 4. Install the dependencies
 RUN pip install -r requirements.txt
 
-### 5. Set default port for modbus client
-ENV MODBUS_CLIENT_NAME=modbus-client-container
+## 5. Set Environment variable
+ENV MODBUS_CLIENT_NAME=modbus-client
 ENV MODBUS_CLIENT_PORT=3000
 
+## 6. Expose Port to other applications
 EXPOSE 3000
-## 4. Define the command to run when the container starts.
+
+## 7. Define the command to run when the container starts.
 CMD ["python", "-u", "Client.py"]
 
 #-u option to force unbuffered output
