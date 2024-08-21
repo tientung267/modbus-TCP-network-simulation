@@ -40,22 +40,25 @@ Wenn die Länge der aktuellen Modbus/TCP Paket mit den zu verschlüsselte Bit ni
 #### Size Modulation: 
 Die Methode zielt auf einem Empfänger des Nachrichts in Segment C ab. In C wird für jeden ankommende Modbus/TCP Packet das "Length" Feld im mbap-header extrahiert.
 #### Inter-Packet-Times: 
-Die Methode zielt auf einem Empfänger des Nachrichts in Segment A ab. In A wird die Round-Trip-Time für jeden gesendeten Modbus/TCP Paket gerechnet. Da aber die Netzwerkdrosselung im Segment B die Verzögerung um 1 erhört muss es auch beachtet werden, dass nur die Nachkommazahlen ([0.25, 0.5]) als steganografische eingebettete Verzögerung betrachtet werden soll bei Nachrichtempfänger.
+Die Methode zielt auf einem Empfänger des Nachrichts in Segment A ab. In A wird die Round-Trip-Time für jeden gesendeten Modbus/TCP Paket gerechnet. Da aber die Netzwerkdrosselung im Segment B die Verzögerung um 1 erhört muss es auch beachtet werden, um steganografische eingebettete Verzögerung zu rechnen, muss die Netzwerkdrosselungsverzögerung abgezogen werden.
 
 ## Testumgebung
 ### Docker Container
-Die Modbus-Klient, Modbus-Server und Übergangserver werden jeweils in einem Docker Container ausgeführt, jeder Container repräsentiert eine isolierte Umgebung. Diese Isolation ermöglicht es, Anwendungen und deren Abhängigkeiten unabhängig von der zugrunde liegenden Host-Umgebung und unabhängig von anderen Applikationen laufen zu lassen. Diese Konfiguration ermöglicht eine Segmentierung des Netzwerks wie in der obigen Grafik, darüberhinaus können das Ergebnis des Experiments in anderen Host-Umgebung reproduziert werden. Ich selber habe das Experiment in Window mit **WSL2** (Windows Subsystem for Linux 2) ausführe, meine Container hat daher eine **Linux-basierte Betriebssystemumgebung**. Er interagiert ausschließlich mit dem Linux-Kernel und führt Linux-basierte Anwendungen und Bibliotheken aus.
+Die Modbus-Klient, Modbus-Server und Übergangserver werden jeweils in einem Docker Container ausgeführt, jeder Container repräsentiert eine isolierte Umgebung. Diese Isolation ermöglicht es, Anwendungen und deren Abhängigkeiten unabhängig von der zugrunde liegenden Host-Umgebung und unabhängig von anderen Applikationen laufen zu lassen. Diese Konfiguration ermöglicht eine Segmentierung des Netzwerks wie in der obigen Grafik, darüber hinaus können das Ergebnis des Experiments in anderen Host-Umgebung reproduziert werden. Ich selber habe das Experiment in Window mit **WSL2** (Windows Subsystem for Linux 2) ausgeführt, meine Container hat daher eine **Linux-basierte Betriebssystemumgebung**. Er interagiert ausschließlich mit dem Linux-Kernel und führt Linux-basierte Anwendungen und Bibliotheken aus.
 
 ### Docker Images
-Zum Ausführen der Container werden zuerst Anwendungsquellcode in einem Docker Image gebaut. Ein Docker Image ist eine schreibgeschützte Vorlage für den Aufbau eines Docker Containers. Es enthält alles, was notwendig ist, um eine Anwendung auszuführen, einschließlich:
+Zum Ausführen der Container werden zuerst Anwendungsquellcode in einen Docker Image gebaut. Ein Docker Image ist eine schreibgeschützte Vorlage für den Aufbau eines Docker Containers. Es enthält alles, was notwendig ist, um eine Anwendung auszuführen, einschließlich:
     - Der Anwendungs-Quellcode
     - Bibliotheken und Abhängigkeiten
     - Umgebungsvariablen
     - Konfigurationsdateien
     - System-Tools und -Anwendungen
+    
 Alle Images von diesem Experiment werden in einem Repository in Docker-Hub öffentlich zur Verfügung gestellt: 
 - Gateway-Serer image (Für Segment B): https://hub.docker.com/repository/docker/tientungnguyen/gateway-server-image/general
 - Modbus-Klient image (Für Segment A): https://hub.docker.com/repository/docker/tientungnguyen/modbus-client-image/general
 - Modbus-Server image....
 ### Docker-compose.yml
-Der docker compose Datei ermöglicht die Ausführung gleichzeitig alle drei Container in einem gemeinsamen Netzwerk. Die Ports von Applikationen werden jeweils mit einem Container Port zugeordnet.
+Der docker compose Datei ermöglicht die Ausführung gleichzeitig alle drei Container in einem gemeinsamen Netzwerk. Die Ports von Applikationen werden jeweils mit einem Container Port zugeordnet. Der Modbus-Klient lauscht auf dem Port 3000, der Gateway-server lauscht auf dem Port 500 und der Modbus-Server lauscht auf dem Port.
+### Logdatei speichern
+
