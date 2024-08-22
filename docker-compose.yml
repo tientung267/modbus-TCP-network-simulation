@@ -30,6 +30,7 @@ services:
     environment:
       - MODBUS_CLIENT_NAME=modbus-client
       - GATEWAY_SERVER_NAME=gateway-server
+      - MODBUS_CLIENT_PORT=3000
     depends_on:
       - gateway-server
     volumes:
