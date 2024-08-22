@@ -44,21 +44,25 @@ Die Methode zielt auf einem Empfänger des Nachrichts in Segment A ab. In A wird
 
 ## Testumgebung
 ### Docker Container
-Die Modbus-Klient, Modbus-Server und Übergangserver werden jeweils in einem Docker Container ausgeführt, jeder Container repräsentiert eine isolierte Umgebung. Diese Isolation ermöglicht es, Anwendungen und deren Abhängigkeiten unabhängig von der zugrunde liegenden Host-Umgebung und unabhängig von anderen Applikationen laufen zu lassen. Diese Konfiguration ermöglicht eine Segmentierung des Netzwerks wie in der obigen Grafik, darüber hinaus können das Ergebnis des Experiments in anderen Host-Umgebung reproduziert werden. Ich selber habe das Experiment in Window mit **WSL2** (Windows Subsystem for Linux 2) ausgeführt, meine Container hat daher eine **Linux-basierte Betriebssystemumgebung**. Er interagiert ausschließlich mit dem Linux-Kernel und führt Linux-basierte Anwendungen und Bibliotheken aus.
+Der Modbus-Klient, der Modbus-Server und der Übergangserver werden jeweils in einem Docker-Container ausgeführt. Jeder Container stellt eine isolierte Umgebung dar. Diese Isolation ermöglicht es, Anwendungen und deren Abhängigkeiten unabhängig von der zugrunde liegenden Host-Umgebung und von anderen Applikationen laufen zu lassen. Diese Konfiguration erlaubt eine Segmentierung des Netzwerks, wie in der obigen Grafik dargestellt. Darüber hinaus können die Ergebnisse des Experiments in anderen Host-Umgebungen reproduziert werden. Ich habe das Experiment unter Windows mit **WSL2** (Windows Subsystem for Linux 2) durchgeführt, weshalb meine Container eine **Linux-basierte Betriebssystemumgebung** haben. Sie interagieren ausschließlich mit dem Linux-Kernel und führen Linux-basierte Anwendungen und Bibliotheken aus.
 
 ### Docker Images
-Zum Ausführen der Container werden zuerst Anwendungsquellcode in einen Docker Image gebaut. Ein Docker Image ist eine schreibgeschützte Vorlage für den Aufbau eines Docker Containers. Es enthält alles, was notwendig ist, um eine Anwendung auszuführen, einschließlich:
-    - Der Anwendungs-Quellcode
-    - Bibliotheken und Abhängigkeiten
-    - Umgebungsvariablen
-    - Konfigurationsdateien
-    - System-Tools und -Anwendungen
+Zum Ausführen der Container wird zunächst der Anwendungsquellcode in ein Docker-Image gebaut. Ein Docker-Image ist eine schreibgeschützte Vorlage für den Aufbau eines Docker-Containers. Es enthält alles, was notwendig ist, um eine Anwendung auszuführen, einschließlich:
+- Der Anwendungsquellcode
+- Bibliotheken und Abhängigkeiten
+- Umgebungsvariablen
+- Konfigurationsdateien
+- System-Tools und -Anwendungen
     
-Alle Images von diesem Experiment werden in einem Repository in Docker-Hub öffentlich zur Verfügung gestellt: 
+Alle Images dieses Experiments werden in einem Repository auf Docker Hub öffentlich zur Verfügung gestellt:
 - Gateway-Serer image (Für Segment B): https://hub.docker.com/repository/docker/tientungnguyen/gateway-server-image/general
 - Modbus-Klient image (Für Segment A): https://hub.docker.com/repository/docker/tientungnguyen/modbus-client-image/general
-- Modbus-Server image....
+- Modbus-Server image (Für Segment C): https://hub.docker.com/repository/docker/tientungnguyen/modbus-server-image/general
+- 
 ### Docker-compose.yml
-Der docker compose Datei ermöglicht die Ausführung gleichzeitig alle drei Container in einem gemeinsamen Netzwerk. Die Ports von Applikationen werden jeweils mit einem Container Port zugeordnet. Der Modbus-Klient lauscht auf dem Port 3000, der Gateway-server lauscht auf dem Port 500 und der Modbus-Server lauscht auf dem Port.
-### Logdatei speichern
+Die Datei `docker-compose.yml` ermöglicht das gleichzeitige Ausführen aller drei Container in einem gemeinsamen Netzwerk. Die Ports der Applikationen werden jeweils einem Container-Port zugeordnet. Der Modbus-Klient lauscht auf Port 3000, der Gateway-Server auf Port 500, und der Modbus-Server auf Port 502. Die drei Containers kommunizieren miteinander über Containerports und mit Containernamen.
 
+### Logdatei speichern
+In der `docker-compose.yml` werden die `stdout` und `stderr` der Container in `.log`-Dateien umgeleitet. Durch die Verwendung von Docker-Volumes können die Logdateien dauerhaft gespeichert werden:
+- Unter Windows mit WSL2 werden die Logdateien unter \\wsl.localhost\docker-desktop-data\data\docker\volumes\modbus-tcp-network-simulation_modbus-network-data\_data gespeichert.
+- Unter Windows mit WSL2 werden die Logdateien unter /var/lib/docker/volumes/modbus-tcp-network-simulation_modbus-network-data/_data gespeichert.
