@@ -5,17 +5,18 @@ FROM python:3.11-slim
 WORKDIR /app
 ## After step 2 every thing happen inside /app
 
-#copy content of current directory(Segment_c) folder into /app directory
+## 3. copy content of current directory (Segment_B) directory into /app directory
 COPY . .
 
-### 4. Install the dependencies
+## 4. Install the dependencies
 RUN pip install -r  requirements.txt
 
-## 5. Document and inform the developer that the application will use PORT 502 of the container.EXPOSE 502
+## 5. Document and inform the developer that the application will use PORT 500 of the container.
 EXPOSE 500
 
-###6.
-ENV GATEWAY_SERVER_NAME=gateway-server-container
+## 6. Set envrionment variables
+ENV GATEWAY_SERVER_NAME=gateway-server
+ENV MODBUS_SERVER_NAME=modbus-server
 
 ## 7. Define the command to run when the container starts.
 CMD ["python", "-u", "gatewayServer.py"]

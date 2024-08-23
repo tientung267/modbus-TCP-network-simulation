@@ -99,7 +99,7 @@ class CustomModbusClient(BaseModbusClient):
             try:
                 self._sock = socket.socket(af, sock_type, proto)
                 modbus_client_name = os.getenv('MODBUS_CLIENT_NAME', 'localhost')
-                modbus_client_port = os.getenv('MODBUS_CLIENT_PORT', 3000)
+                modbus_client_port = int(os.getenv('MODBUS_CLIENT_PORT', 3000))
 
                 logging.info(f"from {modbus_client_name}:{modbus_client_port}")
                 self._sock.bind((modbus_client_name, modbus_client_port))
