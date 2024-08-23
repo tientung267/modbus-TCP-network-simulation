@@ -1,6 +1,6 @@
 # modbus-TCP-network-simulation
 Für einen besseren Einblick in die Struktur des Experimentprojekts siehe folgende Grafik
-![image](https://github.com/user-attachments/assets/b79ed49f-a95f-4479-b117-0564ba1088bd)
+![image](https://github.com/user-attachments/assets/e8187822-a830-4e97-ac94-1c6c5579363c)
 
 # Einführung: 
 Eine zentrale Komponente dieses Projekts ist die pyModbusTCP-Bibliothek in Python. Die Bibliothek stellt Modbus-Client- und Modbus-Server-Objekte zur Verfügung, die das Verhalten eines echten Masters (Client) und Slaves (Server) in einem industriellen System simulieren. Der Modbus-Client kann Anfragen wie "Read Holding Registers" oder "Write Single Holding Register" an den Modbus-Server senden. Der Modbus-Server verwaltet eine "DataBank", die selbstkonfigurierte Daten von Coils, Holding Registers, Input Registers usw. enthält. Basierend auf den Anfragen des Modbus-Clients sendet der Modbus-Server die entsprechenden Daten aus der DataBank zurück. In diesem Experiment werden nur zwei Arten von Anfragen betrachtet: "Read Single Holding Register" und "Write Single Holding Register".
