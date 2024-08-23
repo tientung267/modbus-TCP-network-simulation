@@ -3,7 +3,20 @@ Für einen besseren Einblick in die Struktur des Experimentprojekts siehe folgen
 ![image](https://github.com/user-attachments/assets/e8187822-a830-4e97-ac94-1c6c5579363c)
 
 # Einführung: 
-Eine zentrale Komponente dieses Projekts ist die pyModbusTCP-Bibliothek in Python. Die Bibliothek stellt Modbus-Client- und Modbus-Server-Objekte zur Verfügung, die das Verhalten eines echten Masters (Client) und Slaves (Server) in einem industriellen System simulieren. Der Modbus-Client kann Anfragen wie "Read Holding Registers" oder "Write Single Holding Register" an den Modbus-Server senden. Der Modbus-Server verwaltet eine "DataBank", die selbstkonfigurierte Daten von Coils, Holding Registers, Input Registers usw. enthält. Basierend auf den Anfragen des Modbus-Clients sendet der Modbus-Server die entsprechenden Daten aus der DataBank zurück. In diesem Experiment werden nur zwei Arten von Anfragen betrachtet: "Read Single Holding Register" und "Write Single Holding Register".
+Eine zentrale Komponente dieses Projekts ist die pyModbusTCP-Bibliothek in Python. Die Bibliothek stellt Modbus-Client- und Modbus-Server-Objekte zur Verfügung, die eine Modbus-Kommunikationsumgebung simulieren. Im Folgenden sind die Hauptunterschiede und der Zweck der Module aufgeführt:
+- **modbusClient:**
+> Stellt eine Python-Implementierung eines Modbus-Clients bereit.
+> Ermöglicht einem Benutzer, Modbus-Nachrichten an einen Modbus-Server zu senden.
+> Der Modbus-Client kann Anfragen wie "Read Holding Registers" oder "Write Single Holding Register" an den Modbus-Server senden. 
+> Kann verwendet werden, um mit realen oder simulierten Modbus-Servern (z.B. Geräten wie PLCs, Sensoren oder Aktoren) zu kommunizieren.
+
+- **modbusServer:**
+> Stellt eine Python-Implementierung eines Modbus-Servers bereit.
+> Kann Anfragen von einem Modbus-Client empfangen und darauf antworten.
+> Dient zur Simulation eines Modbus-fähigen Geräts, wie z.B. eines Sensors oder Aktors.
+> Der Modbus-Server verwaltet eine "DataBank", die selbstkonfigurierte Daten von Coils, Holding Registers, Input Registers usw. enthält. Basierend auf den Anfragen des Modbus-Clients sendet der Modbus-Server die entsprechenden Daten aus der DataBank zurück.
+
+In diesem Experiment werden nur zwei Arten von Anfragen betrachtet: "Read Single Holding Register" und "Write Single Holding Register".
 
 ## Segment A:
 In Segment A wird ein Modbus-Client instanziiert. Zur Erfassung des Fingerabdrucks des Modbus/TCP-Kommunikationsverhaltens werden einige eingebaute Funktionen und Klassen des Modbus-Client-Moduls von pyModbusTCP überschrieben, um Logging zu implementieren. Details des Modbus/TCP-Pakets, wie MBAP-Header und PDU-Payload, werden sowohl beim Absenden des Pakets als auch beim Empfang der Antwort ausgeloggt. Zudem erfolgt eine Anwendungsschicht-Filterung beim Empfang der Antwort vom Server, um die Konsistenz des Modbus/TCP-Pakets zu überprüfen. Es wird geprüft, ob z.B. die Transaktions-ID von Anfrage und Antwort übereinstimmt, ob die Protokoll-ID korrekt ist oder ob der im Header angegebene Wert die zulässige Grenze nicht überschreitet. Auch für die PDU-Payload der Antwort erfolgt eine Filterung.
