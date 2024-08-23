@@ -5,16 +5,16 @@ Für einen besseren Einblick in die Struktur des Experimentprojekts siehe folgen
 # Einführung: 
 Eine zentrale Komponente dieses Projekts ist die pyModbusTCP-Bibliothek in Python. Die Bibliothek stellt Modbus-Client- und Modbus-Server-Objekte zur Verfügung, die eine Modbus-Kommunikationsumgebung simulieren. Im Folgenden sind die Hauptunterschiede und der Zweck der Module aufgeführt:
 - **modbusClient:**
-> Stellt eine Python-Implementierung eines Modbus-Clients bereit.
-> Ermöglicht einem Benutzer, Modbus-Nachrichten an einen Modbus-Server zu senden.
-> Der Modbus-Client kann Anfragen wie "Read Holding Registers" oder "Write Single Holding Register" an den Modbus-Server senden. 
-> Kann verwendet werden, um mit realen oder simulierten Modbus-Servern (z.B. Geräten wie PLCs, Sensoren oder Aktoren) zu kommunizieren.
+  - Stellt eine Python-Implementierung eines Modbus-Clients bereit.
+  - Ermöglicht einem Benutzer, Modbus-Nachrichten an einen Modbus-Server zu senden.
+  - Der Modbus-Client kann Anfragen wie "Read Holding Registers" oder "Write Single Holding Register" an den Modbus-Server senden. 
+  - Kann verwendet werden, um mit realen oder simulierten Modbus-Servern (z.B. Geräten wie PLCs, Sensoren oder Aktoren) zu kommunizieren.
 
 - **modbusServer:**
-> Stellt eine Python-Implementierung eines Modbus-Servers bereit.
-> Kann Anfragen von einem Modbus-Client empfangen und darauf antworten.
-> Dient zur Simulation eines Modbus-fähigen Geräts, wie z.B. eines Sensors oder Aktors.
-> Der Modbus-Server verwaltet eine "DataBank", die selbstkonfigurierte Daten von Coils, Holding Registers, Input Registers usw. enthält. Basierend auf den Anfragen des Modbus-Clients sendet der Modbus-Server die entsprechenden Daten aus der DataBank zurück.
+  - Stellt eine Python-Implementierung eines Modbus-Servers bereit.
+  - Kann Anfragen von einem Modbus-Client empfangen und darauf antworten.
+  - Dient zur Simulation eines Modbus-fähigen Geräts, wie z.B. eines Sensors oder Aktors.
+  - Der Modbus-Server verwaltet eine "DataBank", die selbstkonfigurierte Daten von Coils, Holding Registers, Input Registers usw. enthält. Basierend auf den Anfragen des Modbus-Clients sendet der Modbus-Server die entsprechenden Daten aus der DataBank zurück.
 
 In diesem Experiment werden nur zwei Arten von Anfragen betrachtet: "Read Single Holding Register" und "Write Single Holding Register".
 
