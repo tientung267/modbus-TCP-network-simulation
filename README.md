@@ -75,7 +75,7 @@ Alle Images dieses Experiments werden in einem Repository auf Docker Hub öffent
 - Gateway-Serer image (Für Segment B): https://hub.docker.com/repository/docker/tientungnguyen/gateway-server-image/general
 - Modbus-Klient image (Für Segment A): https://hub.docker.com/repository/docker/tientungnguyen/modbus-client-image/general
 - Modbus-Server image (Für Segment C): https://hub.docker.com/repository/docker/tientungnguyen/modbus-server-image/general
-- 
+
 ### Docker-compose.yml
 Die Datei `docker-compose.yml` ermöglicht das gleichzeitige Ausführen aller drei Container in einem gemeinsamen Netzwerk. Die Ports der Applikationen werden jeweils einem Container-Port zugeordnet. Der Modbus-Klient lauscht auf Port 3000, der Gateway-Server auf Port 500, und der Modbus-Server auf Port 502. Die drei Containers kommunizieren miteinander über Containerports und mit Containernamen.
 
