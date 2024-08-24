@@ -59,6 +59,10 @@ Die Methode zielt auf einem Empfänger des Nachrichts in Segment A ab. In A wird
 ### Docker Container
 Der Modbus-Klient, der Modbus-Server und der Übergangserver werden jeweils in einem Docker-Container ausgeführt. Jeder Container stellt eine isolierte Umgebung dar. Diese Isolation ermöglicht es, Anwendungen und deren Abhängigkeiten unabhängig von der zugrunde liegenden Host-Umgebung und von anderen Applikationen laufen zu lassen. Diese Konfiguration erlaubt eine Segmentierung des Netzwerks, wie in der obigen Grafik dargestellt. Darüber hinaus können die Ergebnisse des Experiments in anderen Host-Umgebungen reproduziert werden. Ich habe das Experiment unter Windows mit **WSL2** (Windows Subsystem for Linux 2) durchgeführt, weshalb meine Container eine **Linux-basierte Betriebssystemumgebung** haben. Sie interagieren ausschließlich mit dem Linux-Kernel und führen Linux-basierte Anwendungen und Bibliotheken aus.
 
+### Requirements
+- **Linux:** Docker Engine, Docker CLI, Docker Compose. In Linux sind  Docker Engine und Docker CLI standardmäßig schon installiert.
+- **Windows:** Ich habe Docker Desktop verwendet, das schon alle oben 3 Komponenten bereits enthält. Außerdem bietet Docker Desktop GUI, um  Container zu verwalten, Images zu anzeigen, Netzwerke zu überwachen. 
+
 ### Docker Images
 Zum Ausführen der Container wird zunächst der Anwendungsquellcode in ein Docker-Image gebaut. Ein Docker-Image ist eine schreibgeschützte Vorlage für den Aufbau eines Docker-Containers. Es enthält alles, was notwendig ist, um eine Anwendung auszuführen, einschließlich:
 - Der Anwendungsquellcode
@@ -79,3 +83,12 @@ Die Datei `docker-compose.yml` ermöglicht das gleichzeitige Ausführen aller dr
 In der `docker-compose.yml` werden die `stdout` und `stderr` der Container in `.log`-Dateien umgeleitet. Durch die Verwendung von Docker-Volumes können die Logdateien dauerhaft gespeichert werden:
 - Unter Windows mit WSL2 werden die Logdateien unter \\wsl.localhost\docker-desktop-data\data\docker\volumes\modbus-tcp-network-simulation_modbus-network-data\_data gespeichert.
 - Unter Windows mit WSL2 werden die Logdateien unter /var/lib/docker/volumes/modbus-tcp-network-simulation_modbus-network-data/_data gespeichert.
+
+# Ausführung des Experiments:
+- **Mit Docker Compose**: Da alle benötigten Komponenten eines Segments in einem Image gebündelt wurden, kann man diese in einer `docker-compose.yml` Datei definieren. Docker Compose startet daraufhin alle Container in einem isolierten Netzwerk.
+  - Zum Starten: docker compose up
+  - Zum Beenden: docker compose down
+- **Mit `Dockerfile`**: Für jedes Segment ist ein eigenes Dockerfile definiert, mit dem ein Image gebaut und dann als Container ausgeführt werden kann.
+  - Reihenfolge: Zuerst muss der Server gestartet werden, gefolgt vom Gateway-Server und schließlich dem Client.
+  - Alle Container müssen in einem gemeinsamen Netzwerk laufen, daher sollte ein Docker-Netzwerk erstellt werden.
+- **Ohne Docker**: Das Experiment kann auch ohne Docker ausgeführt werden. In diesem Fall haben alle Segmente standardmäßig den Hostnamen localhost. In jedem Segment gibt es eine Startdatei (`StartServer`, `StartGatewayServer` und `StartClient`), um die jeweiligen Segmente manuell zu starten.
