@@ -75,7 +75,7 @@ def handle_client(client_socket, server_address):
     steg_s1 = None
     steg_t1 = None
     num_bits_embed = 0
-    if os.getenv('APPLY_SIZE_MODULATION', True):
+    if os.getenv('APPLY_SIZE_MODULATION', False):
         steg_s1 = S1SizeModulation()
         steg_s1.set_embedded_message(S1_STEG_MESS)
         logging.info("applying size modulation")
