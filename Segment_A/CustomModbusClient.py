@@ -130,7 +130,11 @@ class CustomModbusClient(BaseModbusClient):
         # send
         try:
             self._sock.send(frame)
-            ReadMsgT1.request_send_time = time.time()
+            # Check if there is hidden message to read
+            if os.getenv('APPLY_INTER_PACKET_TIMES', False):
+                if not ReadMsgT1.stop_read_msg:
+                    ReadMsgT1.request_send_time = time.time()
+
             logging.info(f"request sent at: {time.time()}")
         except socket.timeout:
             self._sock.close()
@@ -180,11 +184,16 @@ class CustomModbusClient(BaseModbusClient):
 
         # recv PDU
         rx_pdu = self._recv_all(f_length - 1)
-        function_code = struct.unpack('>B', rx_pdu[0:1])[0]
-        ReadMsgT1.response_receive_time = time.time()
-        ReadMsgT1.resolve_hidden_message_s1(function_code)
         logging.info(f"response received at: {time.time()}")
-        logging.info(f"collapsed time: {ReadMsgT1.response_receive_time - ReadMsgT1.request_send_time}")
+        function_code = struct.unpack('>B', rx_pdu[0:1])[0]
+
+        # Check if there is hidden message to read
+        if os.getenv('APPLY_INTER_PACKET_TIMES', False):
+            if not ReadMsgT1.stop_read_msg:
+                ReadMsgT1.response_receive_time = time.time()
+                ReadMsgT1.resolve_hidden_message_s1(function_code)
+                logging.info(f"collapsed time: {ReadMsgT1.response_receive_time - ReadMsgT1.request_send_time}")
+
         # for auto_close mode, close socket after each request
         if self.auto_close:
             self.close()

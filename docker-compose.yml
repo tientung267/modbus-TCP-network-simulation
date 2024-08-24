@@ -17,6 +17,7 @@ services:
     environment:
       - GATEWAY_SERVER_NAME=gateway-server
       - MODBUS_SERVER_NAME=modbus-server
+      - APPLY_INTER_PACKET_TIMES=True # Bei Default Inter-Packet-Time wird im Gateway-Server angewendet
     depends_on:
       - modbus-server
     volumes:
@@ -31,6 +32,7 @@ services:
       - MODBUS_CLIENT_NAME=modbus-client
       - GATEWAY_SERVER_NAME=gateway-server
       - MODBUS_CLIENT_PORT=3000
+      - APPLY_INTER_PACKET_TIMES=True
     depends_on:
       - gateway-server
     volumes:

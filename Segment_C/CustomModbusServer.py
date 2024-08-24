@@ -1,3 +1,4 @@
+import os
 import struct
 from pyModbusTCP.constants import READ_HOLDING_REGISTERS, EXP_DATA_VALUE
 from pyModbusTCP.server import ModbusServer as BaseModbusServer
@@ -206,8 +207,11 @@ class CustomModbusServer(BaseModbusServer):
                                      self.length,
                                      self.unit_id,
                                      "request header: ")
-            if not ReadMsgS1.stop_read_msg:
-                ReadMsgS1.resolve_hidden_message_s1(self.length)
+            # Check if there is hidden message to read
+            if os.getenv('APPLY_SIZE_MODULATION', False):
+                if not ReadMsgS1.stop_read_msg:
+                    ReadMsgS1.resolve_hidden_message_s1(self.length)
+
             # check frame header content inconsistency
             if self.protocol_id != 0:
                 raise BaseModbusServer.DataFormatError('MBAP protocol ID must be 0')
