@@ -32,17 +32,22 @@ class T1InterPacketTimes:
         :param function_code: function_code of current modbus/TCP packet
 
         """
+        delay_applied = False
         if self._embedded_message[self._counter] == '0' and function_code == 6:
             logging.info(f"Delaying for bit {self._embedded_message[self._counter]}")
             time.sleep(0.25)
             self._counter += 1
+            delay_applied = True
         elif self._embedded_message[self._counter] == '1' and function_code == 3:
             logging.info(f"Delay for bit {self._embedded_message[self._counter]}")
             time.sleep(0.25)
             self._counter += 1
+            delay_applied = True
         else:
             logging.warning(
                 f"no delay for bit {self._embedded_message[self._counter]} and function code {function_code}")
+
+        return delay_applied
 
     @staticmethod
     def convert_steganography_message_to_bits(steganography_message):

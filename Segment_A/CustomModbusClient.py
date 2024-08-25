@@ -34,23 +34,26 @@ class ReadMsgT1:
             ReadMsgT1.resolve_length_message(function_code)
         else:
             if ReadMsgT1.bits_message_counter > 0:
-                ReadMsgT1.hidden_message_t1 = ReadMsgT1.delay_logic(
+                msg_changed, temp_hidden_message = ReadMsgT1.delay_logic(
                     ReadMsgT1.response_receive_time,
                     ReadMsgT1.request_send_time,
                     function_code,
                     ReadMsgT1.hidden_message_t1
                 )
 
-                ReadMsgT1.bits_message_counter -= 1
-                logging.info(f"read hidden message: {ReadMsgT1.hidden_message_t1}")
+                if msg_changed:
+                    ReadMsgT1.hidden_message_t1 = temp_hidden_message
+                    ReadMsgT1.bits_message_counter -= 1
+
+                logging.info(f"Reading hidden message: {ReadMsgT1.hidden_message_t1}")
             else:
-                logging.info(f"top read hidden message: {ReadMsgT1.hidden_message_t1}")
+                logging.info(f"Read hidden message complete. Full message: {ReadMsgT1.hidden_message_t1}")
                 ReadMsgT1.stop_read_msg = True
 
     @classmethod
     def resolve_length_message(cls, function_code):
         logging.info(f"resolve length: {len(cls.msg_bits)}")
-        cls.msg_bits = cls.delay_logic(cls.response_receive_time,cls.request_send_time,function_code, cls.msg_bits)
+        _, cls.msg_bits = cls.delay_logic(cls.response_receive_time,cls.request_send_time,function_code, cls.msg_bits)
 
         if len(cls.msg_bits) == HEADER_BITS_LENGTH:
             cls.bits_message_counter = int(cls.msg_bits, 2)
@@ -58,18 +61,21 @@ class ReadMsgT1:
 
     @staticmethod
     def delay_logic(response_receive_time, request_send_time, function_code, bit_sequence):
+        read_msg_changed = False
         rtt = (response_receive_time - request_send_time)
-        rtt_without_delay = rtt - int(rtt)
+        rtt_without_delay = round((rtt - int(rtt)) + 0.005, 2)
         logging.info(f"rtt without delay: {rtt_without_delay}")
-        if 0.25 < rtt_without_delay < 0.5 and function_code == 3:
+        if 0.25 <= rtt_without_delay < 0.5 and function_code == 3:
             logging.info(f"add bit 1")
             bit_sequence += '1'
+            read_msg_changed = True
 
-        if 0.25 < rtt_without_delay < 0.5 and function_code == 6:
+        if 0.25 <= rtt_without_delay < 0.5 and function_code == 6:
             logging.info(f"add bit 0")
             bit_sequence += '0'
+            read_msg_changed = True
 
-        return bit_sequence
+        return read_msg_changed, bit_sequence
 class CustomModbusClient(BaseModbusClient):
     def open(self):
         """Connect to modbus server (open TCP connection).
@@ -254,30 +260,3 @@ class CustomModbusClient(BaseModbusClient):
         message = "in request" if request else "in response"
         logging.info(f"function_code: {function_code} {message}")
 
-    '''@staticmethod
-    def pdu_body_logging(pdu_body, request):
-        function_code = struct.unpack('B', pdu_body[:1])[0]
-        logging.info(f"function_code: {function_code}")
-        if function_code == 3:
-            # Read holding Register, only one register is read each time
-            if request:
-                pdu_body_truncate = pdu_body[1:4]
-                logging.info("Protocol Data Unit of Request:")
-                (starting_address, quantity_to_read) = struct.unpack(">HH", pdu_body_truncate)
-                logging.info(f"starting_address: {starting_address}")
-                logging.info(f"quantity_to_read: {quantity_to_read}")
-            else:
-                pdu_body_truncate = pdu_body[1:3]
-                logging.info("Protocol Data Unit of Response:")
-                (num_bytes_to_read, read_value) = struct.unpack(">BH", pdu_body_truncate)
-                logging.info(f"num_bytes_to_read: {num_bytes_to_read}")
-                logging.info(f"read_value: {read_value}")
-        elif function_code == 6:
-            pdu_body_truncate = pdu_body[1:4]
-            if request:
-                logging.info("Protocol Data Unit of Request:")
-            else:
-                logging.info("Protocol Data Unit of Response:")
-            (writing_address, writing_value) = struct.unpack(">HH", pdu_body_truncate)
-            logging.info(f"writing_address: {writing_address}")
-            logging.info(f"writing_value: {writing_value}")'''

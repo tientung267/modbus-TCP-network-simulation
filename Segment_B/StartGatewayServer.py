@@ -126,11 +126,12 @@ def handle_client(client_socket, server_address):
                     request_pdu_body = embedded_request[7:]
 
             if not (steg_t1 is None):
-                # Check if steganography delaying is applicable.
-                # Delaying is only applicable, if network throttling is not occurring
+                # Check if steganography delaying is applicable. Delaying is not always applied, only when (encoded
+                # bit is 0 and function code of current packet is 6) or (encoded bit is 1 and function code of
+                # current packet is 3)
                 if num_bits_embed > 0:
-                    steg_t1.apply_delay(function_code)
-                    num_bits_embed -= 1
+                    if steg_t1.apply_delay(function_code):
+                        num_bits_embed -= 1
 
             # Check if we should start the network throttling period
             if rate_limiting.check_in_delay_period():
