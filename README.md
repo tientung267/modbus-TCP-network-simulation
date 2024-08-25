@@ -49,7 +49,7 @@ Eine ungerade Länge stellt das Bit 1 dar.
 Wenn die Länge der aktuellen Modbus/TCP Paket mit den zu verschlüsselte Bit nicht übereinstimmt, wird die Länge um 1 erhöht, um von gerade auf ungerade oder umgekehrt zu wechseln. Ein "dummy"-Byte wird dazu in pdu Payload hinzugefügt.
 
 ### Methodeanwendung:
-Zur Anwendung einer der beiden Methode in dem Experiment kann man die Umgebungsvariable in `docker-compose.yml` setzen (`APPLY_INTER_PACKET_TIMES` in client und gateway containers für t1 oder `APPLY_SIZE_MODULATION` in server und gateway containers  für s1). Für Beispiel siehe `docker-compose.yml`. Bei Default wird immer inter-packet-times method angewendet
+Zur Anwendung einer der beiden Methode in dem Experiment kann man die Umgebungsvariable in `docker-compose.yml` setzen (`APPLY_INTER_PACKET_TIMES` in client und gateway containers für t1 oder `APPLY_SIZE_MODULATION` in server und gateway containers für s1 mit einem beliebigen Wert). Für Beispiel siehe `docker-compose.yml`. Bei Default wird inter-packet-times method angewendet (`APPLY_INTER_PACKET_TIMES` wurde gesetzt)
   
 ### Einbettung: Das Einbetten werden in Segment B ausgeführt
 ### Auslesen des eingebetteten Nachrichts: 
