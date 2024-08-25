@@ -39,9 +39,9 @@ class ReadMsgS1:
                     ReadMsgS1.hidden_message_s1 += '0'
 
                 ReadMsgS1.bits_message_counter -= 1
-                logging.info(f"read hidden message: {ReadMsgS1.hidden_message_s1}")
+                logging.info(f"reading hidden message: {ReadMsgS1.hidden_message_s1}")
             else:
-                logging.info(f"top read hidden message: {ReadMsgS1.hidden_message_s1}")
+                logging.info(f"Reading finish. Full hidden message: {ReadMsgS1.hidden_message_s1}")
                 ReadMsgS1.stop_read_msg = True
 
     @classmethod
