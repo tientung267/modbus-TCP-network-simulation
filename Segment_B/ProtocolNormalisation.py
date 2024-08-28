@@ -5,7 +5,6 @@ import sys
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',
                     handlers=[logging.StreamHandler(sys.stdout)])
 
-
 class ProtocolNormalisation:
     """this class simulates the protocol normalisation mechanism. The request from client to server and the response
         from server to client will be normalised. """

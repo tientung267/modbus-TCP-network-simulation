@@ -19,6 +19,6 @@ ENV MODBUS_CLIENT_PORT=3000
 EXPOSE 3000
 
 ## 7. Define the command to run when the container starts.
-CMD ["python", "-u", "Client.py"]
+CMD ["python", "-u", "StartClient.py"]
 
 #-u option to force unbuffered output

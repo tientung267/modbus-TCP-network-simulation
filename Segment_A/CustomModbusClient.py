@@ -1,18 +1,17 @@
 import os
 import socket
 import time
+import struct
 from socket import AF_UNSPEC, SOCK_STREAM
 from pyModbusTCP.client import ModbusClient as BaseModbusClient
-import struct
+from constants import HEADER_BITS_LENGTH
 from pyModbusTCP.constants import MB_CONNECT_ERR,MB_SOCK_CLOSE_ERR, MB_SEND_ERR, MB_TIMEOUT_ERR
 import logging
 import sys
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',
                     handlers=[logging.StreamHandler(sys.stdout)])
-# 10 first bits in steganography message will be used to represent number of bits in embedded message (exclude first
-# 10 bits)
-HEADER_BITS_LENGTH = 10
+
 class ReadMsgT1:
     """This class extract hidden message from Gateway server embedded with inter-packet-time methods"""
     hidden_message_t1 = ''
@@ -23,20 +22,21 @@ class ReadMsgT1:
     response_receive_time = None
 
     @staticmethod
-    def resolve_hidden_message_s1(function_code):
+    def resolve_hidden_message_s1(function_code, collapsed_time):
         """
             this method resolves and add bit to the result string `hidden_message_s1`. A modbus/TCP packet with even length
             represents a bit 1 and a modbus/TCP packet with odd length represents a bit 0.
 
             :param function_code: function code of current modbus/TCP packet
+            :param collapsed_time: round trip time from sending time of a modbus/TCP request
+                                   to receiving time of a modbus/TCP response
         """
         if len(ReadMsgT1.msg_bits) < HEADER_BITS_LENGTH:
-            ReadMsgT1.resolve_length_message(function_code)
+            ReadMsgT1.resolve_length_message(function_code, collapsed_time)
         else:
             if ReadMsgT1.bits_message_counter > 0:
                 msg_changed, temp_hidden_message = ReadMsgT1.delay_logic(
-                    ReadMsgT1.response_receive_time,
-                    ReadMsgT1.request_send_time,
+                    collapsed_time,
                     function_code,
                     ReadMsgT1.hidden_message_t1
                 )
@@ -51,27 +51,23 @@ class ReadMsgT1:
                 ReadMsgT1.stop_read_msg = True
 
     @classmethod
-    def resolve_length_message(cls, function_code):
-        logging.info(f"resolve length: {len(cls.msg_bits)}")
-        _, cls.msg_bits = cls.delay_logic(cls.response_receive_time,cls.request_send_time,function_code, cls.msg_bits)
-
+    def resolve_length_message(cls, function_code, collapsed_time):
+        _, cls.msg_bits = cls.delay_logic(collapsed_time,function_code, cls.msg_bits)
+        logging.info(f"hidden message header in bits: {cls.msg_bits}")
         if len(cls.msg_bits) == HEADER_BITS_LENGTH:
             cls.bits_message_counter = int(cls.msg_bits, 2)
-            logging.info(f"number of bits to read: {cls.bits_message_counter}, bytes: {cls.msg_bits}")
+            logging.info(f"number of bits to read: {cls.bits_message_counter}")
 
     @staticmethod
-    def delay_logic(response_receive_time, request_send_time, function_code, bit_sequence):
+    def delay_logic(rtt, function_code, bit_sequence):
         read_msg_changed = False
-        rtt = (response_receive_time - request_send_time)
         rtt_without_delay = round((rtt - int(rtt)) + 0.005, 2)
-        logging.info(f"rtt without delay: {rtt_without_delay}")
+
         if 0.25 <= rtt_without_delay < 0.5 and function_code == 3:
-            logging.info(f"add bit 1")
             bit_sequence += '1'
             read_msg_changed = True
 
         if 0.25 <= rtt_without_delay < 0.5 and function_code == 6:
-            logging.info(f"add bit 0")
             bit_sequence += '0'
             read_msg_changed = True
 
@@ -107,7 +103,7 @@ class CustomModbusClient(BaseModbusClient):
                 modbus_client_name = os.getenv('MODBUS_CLIENT_NAME', 'localhost')
                 modbus_client_port = int(os.getenv('MODBUS_CLIENT_PORT', 3000))
 
-                logging.info(f"from {modbus_client_name}:{modbus_client_port}")
+                logging.info(f"From {modbus_client_name}:{modbus_client_port}")
                 self._sock.bind((modbus_client_name, modbus_client_port))
             except socket.error:
                 continue
@@ -136,12 +132,10 @@ class CustomModbusClient(BaseModbusClient):
         # send
         try:
             self._sock.send(frame)
-            # Check if there is hidden message to read
-            if os.getenv('APPLY_INTER_PACKET_TIMES', False):
-                if not ReadMsgT1.stop_read_msg:
-                    ReadMsgT1.request_send_time = time.time()
+            # Record the time when the Modbus/TCP response is sent
+            ReadMsgT1.request_send_time = time.time()
+            logging.info(f"Request sent at: {ReadMsgT1.request_send_time}")
 
-            logging.info(f"request sent at: {time.time()}")
         except socket.timeout:
             self._sock.close()
             raise BaseModbusClient._NetworkError(MB_TIMEOUT_ERR, 'timeout error')
@@ -190,15 +184,21 @@ class CustomModbusClient(BaseModbusClient):
 
         # recv PDU
         rx_pdu = self._recv_all(f_length - 1)
-        logging.info(f"response received at: {time.time()}")
+
+        # check pdu body. If no error, return PDU
+        self.check_response_pdu_body(rx_pdu, min_len)
+
+        # Record the time when the Modbus/TCP response is received
+        ReadMsgT1.response_receive_time = time.time()
+        logging.info(f"Response received at: {ReadMsgT1.response_receive_time}")
+        collapsed_time = ReadMsgT1.response_receive_time - ReadMsgT1.request_send_time
+        logging.info(f"Round-trip-time: {collapsed_time}")
         function_code = struct.unpack('>B', rx_pdu[0:1])[0]
 
         # Check if there is hidden message to read
         if os.getenv('APPLY_INTER_PACKET_TIMES', False):
             if not ReadMsgT1.stop_read_msg:
-                ReadMsgT1.response_receive_time = time.time()
-                ReadMsgT1.resolve_hidden_message_s1(function_code)
-                logging.info(f"collapsed time: {ReadMsgT1.response_receive_time - ReadMsgT1.request_send_time}")
+                ReadMsgT1.resolve_hidden_message_s1(function_code, collapsed_time)
 
         # for auto_close mode, close socket after each request
         if self.auto_close:
@@ -206,8 +206,6 @@ class CustomModbusClient(BaseModbusClient):
         # dump frame
         self._debug_dump('Rx', rx_mbap + rx_pdu)
 
-        # check pdu body. If no error, return PDU
-        self.check_response_pdu_body(rx_pdu, min_len)
         return rx_pdu
 
     def check_response_mbap_header(self, f_transaction_id, f_protocol_id, f_length, f_unit_id, rx_mbap):
@@ -253,10 +251,12 @@ class CustomModbusClient(BaseModbusClient):
         logging.info(f"protocol_id: {protocol_id}")
         logging.info(f"length: {length}")
         logging.info(f"unit_id: {unit_id}")
+        logging.info("---------------------------------")
 
     @staticmethod
     def pdu_body_logging(pdu_body, request):
         function_code = struct.unpack('B', pdu_body[0:1])[0]
-        message = "in request" if request else "in response"
-        logging.info(f"function_code: {function_code} {message}")
-
+        message = "Request PDU: " if request else "Response PDU: "
+        logging.info(f"{message}")
+        logging.info(f"function_code: {function_code}")
+        logging.info("---------------------------------")

@@ -1,8 +1,7 @@
 import struct
 import logging
 import sys
-
-DUMMY_EMBEDDED_BYTE = 0
+from constants import DUMMY_EMBEDDED_BYTE
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',
                     handlers=[logging.StreamHandler(sys.stdout)])

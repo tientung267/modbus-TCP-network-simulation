@@ -1,12 +1,10 @@
 import time
 import logging
 import sys
+from constants import DELAY_INTERVAL, DELAY_DURATION
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',
                     handlers=[logging.StreamHandler(sys.stdout)])
-
-DELAY_INTERVAL = 30  # Time in seconds after which delay should be introduced
-DELAY_DURATION = 10  # Time in seconds indicates how long the throttling of the network should take place
 
 class RateLimiting:
     """This class simulates Network throttling mechanism. The gateway server will be scheduled to reduce network traffic

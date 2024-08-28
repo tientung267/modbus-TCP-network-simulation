@@ -19,6 +19,6 @@ ENV GATEWAY_SERVER_NAME=gateway-server
 ENV MODBUS_SERVER_NAME=modbus-server
 
 ## 7. Define the command to run when the container starts.
-CMD ["python", "-u", "gatewayServer.py"]
+CMD ["python", "-u", "StartGatewayServer.py"]
 
 #-u option to force unbuffered output

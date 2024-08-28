@@ -5,10 +5,6 @@ import time
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',
                     handlers=[logging.StreamHandler(sys.stdout)])
 
-NETWORK_THROTTLING_INTERVAL = 30  # Time in seconds after which no steganography delay should be applied
-NETWORK_THROTTLING_DURATION = 10  # After network throttling period, steganography delay can be applied again
-
-
 class T1InterPacketTimes:
     """This class represent steganography method inter-packet-time. It tries to hide a sequence of bits (e.g: 100101) in
         the modbus communication. Each bit will represent by a small delay of 250ms of modbus/TCP Paket"""
@@ -32,22 +28,18 @@ class T1InterPacketTimes:
         :param function_code: function_code of current modbus/TCP packet
 
         """
-        delay_applied = False
-        if self._embedded_message[self._counter] == '0' and function_code == 6:
-            logging.info(f"Delaying for bit {self._embedded_message[self._counter]}")
+        bit = self._embedded_message[self._counter]
+        delay_mapping = {'0': 6, '1': 3}
+
+        if function_code == delay_mapping.get(bit):
+            logging.info(f"Delaying 0.25ms for bit {bit}")
             time.sleep(0.25)
             self._counter += 1
-            delay_applied = True
-        elif self._embedded_message[self._counter] == '1' and function_code == 3:
-            logging.info(f"Delay for bit {self._embedded_message[self._counter]}")
-            time.sleep(0.25)
-            self._counter += 1
-            delay_applied = True
+            return True
         else:
             logging.warning(
-                f"no delay for bit {self._embedded_message[self._counter]} and function code {function_code}")
-
-        return delay_applied
+                f"No delay for bit {self._embedded_message[self._counter]} and function code {function_code}")
+            return False
 
     @staticmethod
     def convert_steganography_message_to_bits(steganography_message):
