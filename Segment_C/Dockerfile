@@ -18,6 +18,6 @@ ENV MODBUS_SERVER_NAME=modbus-server
 EXPOSE 502
 
 ## 7. Define the command to run when the container starts.
-CMD ["python", "-u", "Server.py"]
+CMD ["python", "-u", "StartServer.py"]
 
 #-u option to force unbuffered output

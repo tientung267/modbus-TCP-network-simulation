@@ -7,6 +7,8 @@ from ProtocolNormalisation import ProtocolNormalisation
 from RateLimiting import RateLimiting
 from SteganographySizeModulationMethod import S1SizeModulation
 from SteganographyInterPacketTimesMethod import T1InterPacketTimes
+from constants import (SOCKET_TIMEOUTS, NUM_CLIENT, S1_STEG_MESS, T1_STEG_MESS, SLEEP_DURATION, NUM_BITS_CHARACTER,
+                       NUM_BITS_HEADER)
 import logging
 import time
 import os
@@ -14,38 +16,28 @@ import os
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',
                     handlers=[logging.StreamHandler(sys.stdout)])
 
-SOCKET_TIMEOUTS = 1.1
-NUM_CLIENT = 1
-NUM_REG_TO_READ = 1
-FUNCTION_CODE = 3
-S1_STEG_MESS = "this steganography message will be embedded with S1 method"
-T1_STEG_MESS = "this steganography message will be embedded with T1 method"
-SLEEP_DURATION = 1
-NUM_BITS_CHARACTER = 7  # each character in hidden message is represented by 7 bits (number in ASCII table)
-NUM_BITS_HEADER = 10  # 10 first bits in embedded message represents number of bits following (max 1023 bits)
-
-def mbap_header_logging(transaction_id, protocol_id, length, unit_id):
+def mbap_header_logging(transaction_id, protocol_id, length, unit_id, source):
     """Log out the header of a modbus/TCP packet"""
+    logging.info(f"{source} header:")
     logging.info(f"transaction_id: {transaction_id}")
     logging.info(f"protocol_id: {protocol_id}")
     logging.info(f"length: {length}")
     logging.info(f"unit_id: {unit_id}")
-
+    logging.info("----------------------------------")
 
 def pdu_body_logging(function_code, pdu_body, request):
     """Log out the pdu payload of a modbus/TCP packet"""
-    logging.info(f"function_code: {function_code}")
     if function_code == 3:
         # Read holding Register, only one register is read each time
         if request:
             pdu_body_truncate = pdu_body[:4]
-            logging.info("Protocol Data Unit of Request:")
+            logging.info("Request PDU:")
             (starting_address, quantity_to_read) = struct.unpack(">HH", pdu_body_truncate)
             logging.info(f"starting_address: {starting_address}")
             logging.info(f"quantity_to_read: {quantity_to_read}")
         else:
             pdu_body_truncate = pdu_body[:3]
-            logging.info("Protocol Data Unit of Response:")
+            logging.info("Response PDU:")
             (num_bytes_to_read, read_value) = struct.unpack(">BH", pdu_body_truncate)
             logging.info(f"num_bytes_to_read: {num_bytes_to_read}")
             logging.info(f"read_value: {read_value}")
@@ -59,22 +51,24 @@ def pdu_body_logging(function_code, pdu_body, request):
         (writing_address, writing_value) = struct.unpack(">HH", pdu_body_truncate)
         logging.info(f"writing_address: {writing_address}")
         logging.info(f"writing_value: {writing_value}")
+    logging.info(f"function_code: {function_code}")
+    logging.info("----------------------------------")
 
+def calculate_and_log_rtt(response_source, forward_response_time, receive_request_time):
+    """ Utility for calculating RTT"""
+    logging.info(f"Forward response from {response_source} to modbus-client")
+    logging.info(f"Round-Trip-Time at gateway-server: {forward_response_time - receive_request_time}\n\n")
 
-def handle_client(client_socket, server_address):
-    """Handle communication between client and server."""
+def connect_to_server(server_address):
+    """Connect gateway server with modbus server"""
+    try:
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.connect(server_address)
+        return server_socket
+    except Exception as e:
+        logging.error(f"Error: {e} while connecting to {server_address}")
 
-    # Create a socket to communicate with the actual server
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.connect(server_address)
-
-    # Network will be throttled every 30 seconds. The throttling last for 10 seconds.
-    # In this ten seconds period, each request will be delayed for 1 seconds
-    rate_limiting = RateLimiting()
-
-    steg_s1 = None
-    steg_t1 = None
-    num_bits_embed = 0
+def apply_size_modulation():
     if os.getenv('APPLY_SIZE_MODULATION', False):
         steg_s1 = S1SizeModulation()
         steg_s1.set_embedded_message(S1_STEG_MESS)
@@ -82,56 +76,88 @@ def handle_client(client_socket, server_address):
         # Each character in steganography will be encoded by 8 bits, which represent ASCII number of that character.
         # 8 first bits represent number of characters in the message
         num_bits_embed = len(S1_STEG_MESS) * NUM_BITS_CHARACTER + NUM_BITS_HEADER
+        return steg_s1, num_bits_embed
+    return None, 0
 
+def apply_inter_packet_times():
     if os.getenv('APPLY_INTER_PACKET_TIMES', False):
         steg_t1 = T1InterPacketTimes(T1_STEG_MESS)
-
+        logging.info("applying inter packet times")
         # Each character in steganography will be encoded by 8 bits, which represent ASCII number of that character.
         # 8 first bits represent number of characters in the message
         num_bits_embed = len(T1_STEG_MESS) * NUM_BITS_CHARACTER + NUM_BITS_HEADER
+        return steg_t1, num_bits_embed
+    return None, 0
+
+def close_connection(client_socket, server_socket):
+    """close connection from gateway server to modbus-client and modbus-server"""
+    client_socket.close()
+    logging.info("Client socket closed")
+    server_socket.close()
+    logging.info("Server socket closed")
+
+def handle_client(client_socket, server_address):
+    """Handle communication between client and server."""
+
+    # Create a socket to communicate with the actual server
+    server_socket = connect_to_server(server_address)
+
+    # Network will be throttled every 30 seconds. The throttling last for 10 seconds.
+    # In this ten seconds period, each request will be delayed for 1 seconds
+    rate_limiting = RateLimiting()
+    gateway_cache = Caching()
+    # Object to apply steganography methode size modulation
+    steg_s1, num_bits_embedded_s1 = apply_size_modulation()
+    # Object to apply steganography methode inter-packet-times
+    steg_t1, num_bits_embedded_t1 = apply_inter_packet_times()
     try:
         while True:
             # receive request from client
             modbus_client_request = client_socket.recv(1024)
-            logging.info(f"request arrive gateway server at {time.time()}")
+            # Time when the Modbus/TCP request is received
+            receive_request_time = time.time()
+            logging.info(f"Request arrives gateway server at {receive_request_time}")
+
             request_mbap_header = modbus_client_request[:7]
             request_pdu_body = modbus_client_request[7:]
-            logging.info("Receiving request from client:-------------------")
 
             (transaction_id, protocol_id, length, unit_id) = struct.unpack('>HHHB', request_mbap_header)
             function_code = struct.unpack('B', request_pdu_body[:1])[0]
-            mbap_header_logging(transaction_id, protocol_id, length, unit_id)
+            mbap_header_logging(transaction_id, protocol_id, length, unit_id, "Request")
             pdu_body_logging(function_code, request_pdu_body[1:], True)
 
             # Check in cache if register value is available
             if function_code == 3:
-                response_from_cache = Caching.check_if_value_in_cache(request_pdu_body, transaction_id, protocol_id,
-                                                                      unit_id)
+                response_from_cache = gateway_cache.check_if_value_in_cache(request_pdu_body,
+                                                                            transaction_id,
+                                                                            protocol_id,
+                                                                            unit_id)
                 if response_from_cache is not None:
-                    logging.info("Sending response from cache")
+                    receive_response_time = time.time()
+                    calculate_and_log_rtt("cache",
+                                          receive_response_time,
+                                          receive_request_time)
                     client_socket.sendall(response_from_cache)
                     continue
             elif function_code == 6:
                 # If an existing value in cache is overwritten, this value will be removed from cache
                 function_code, writing_address, value = struct.unpack('>BHH', request_pdu_body)
-                Caching.clean_cache(writing_address)
-                logging.info(f"cache after being cleaned {Caching.cache}")
+                gateway_cache.clean_cache(writing_address)
+                logging.info(f"cache after being cleaned {gateway_cache.cache}")
 
-            if not (steg_s1 is None):
-                if num_bits_embed > 0:
-                    # embed steganography in request
-                    embedded_request = steg_s1.s1_size_modulation(modbus_client_request, True)
-                    num_bits_embed -= 1
-                    request_mbap_header = embedded_request[:7]
-                    request_pdu_body = embedded_request[7:]
+            if steg_s1 is not None and num_bits_embedded_s1 > 0:
+                # embed steganography in request
+                embedded_request = steg_s1.s1_size_modulation(modbus_client_request, True)
+                num_bits_embedded_s1 -= 1
+                request_mbap_header = embedded_request[:7]
+                request_pdu_body = embedded_request[7:]
 
-            if not (steg_t1 is None):
+            if steg_t1 is not None and num_bits_embedded_t1 > 0:
                 # Check if steganography delaying is applicable. Delaying is not always applied, only when (encoded
                 # bit is 0 and function code of current packet is 6) or (encoded bit is 1 and function code of
                 # current packet is 3)
-                if num_bits_embed > 0:
-                    if steg_t1.apply_delay(function_code):
-                        num_bits_embed -= 1
+                if steg_t1.apply_delay(function_code):
+                    num_bits_embedded_t1 -= 1
 
             # Check if we should start the network throttling period
             if rate_limiting.check_in_delay_period():
@@ -151,18 +177,28 @@ def handle_client(client_socket, server_address):
 
             # Receive response from server
             modbus_server_response = server_socket.recv(1024)
-            response_mbap_header = modbus_server_response[:7]
-            response_pdu_body = modbus_server_response[7:]
-            logging.info("Received response from server: ")
 
+            response_mbap_header = modbus_server_response[:7]
+            (transaction_id_res,
+             protocol_id_res,
+             length_res,
+             unit_id_res) = struct.unpack('>HHHB', response_mbap_header)
+
+            mbap_header_logging(transaction_id_res,
+                                protocol_id_res,
+                                length_res,
+                                unit_id_res,
+                                "Response")
+
+            response_pdu_body = modbus_server_response[7:]
             function_code = struct.unpack('B', response_pdu_body[:1])[0]
             pdu_body_logging(function_code, response_pdu_body[1:], False)
 
             if function_code == 3:
                 (_, read_address, _) = struct.unpack('>BHH', request_pdu_body[:5])
                 (_, _, read_data) = struct.unpack('>BBH', modbus_server_response[7:11])
-                Caching.set_cache_data(read_address, read_data)
-                logging.info(f"cache after add new value {Caching.cache}")
+                gateway_cache.set_cache_data(read_address, read_data)
+                logging.info(f"New value added to cache: {gateway_cache.cache}")
 
             # Protocol normalisation from response from server to request
             normalised_response = ProtocolNormalisation.protocol_normalisation(response_mbap_header,
@@ -171,16 +207,13 @@ def handle_client(client_socket, server_address):
 
             # Forward response from server to client
             client_socket.sendall(normalised_response)
-
-            logging.info("Response from Server is forwarded to client-------\n\n")
+            # Time when the Modbus/TCP response is received
+            forward_response_time = time.time()
+            calculate_and_log_rtt("modbus-server", forward_response_time, receive_request_time)
     except Exception as e:
-        logging.error(f"Error: {e} \n...Connection will be terminated")
+        logging.error(f"Error: {e} \n...Connection will be terminated\n")
     finally:
-        client_socket.close()
-        logging.info("Client socket closed")
-        server_socket.close()
-        logging.info("Server socket closed")
-
+        close_connection(client_socket, server_socket)
 
 def start_gateway(host='localhost', port=500, server_address=('localhost', 502)):
     """Start the gateway server. Gateway server is a socket, which receives request from Modbus-Client and forwards it

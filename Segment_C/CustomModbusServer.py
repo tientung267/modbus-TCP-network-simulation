@@ -1,5 +1,7 @@
 import os
 import struct
+import time
+
 from pyModbusTCP.constants import READ_HOLDING_REGISTERS, EXP_DATA_VALUE
 from pyModbusTCP.server import ModbusServer as BaseModbusServer
 import socket
@@ -56,6 +58,7 @@ class ReadMsgS1:
             cls.msg_bits += '1'
         else:
             cls.msg_bits += '0'
+        logging.info(f"Hidden message Header: {cls.msg_bits}")
         if len(cls.msg_bits) == HEADER_BITS_LENGTH:
             cls.bits_message_counter = int(cls.msg_bits, 2)
             logging.info(f"number of bits to read: {cls.bits_message_counter}")
@@ -148,11 +151,12 @@ class CustomModbusServer(BaseModbusServer):
                     session_data.new_request()
 
                     # Application-layer filtering: Check and set mbap header if valid @raw.setter from MBAP class
-                    session_data.request.mbap.raw = self._recv_all(7)
-
                     # receive mbap from client
                     logger.info("A request is received")
+                    receive_request_time = time.time()
+                    logger.info(f"Request arrives modbus-server at {receive_request_time}")
 
+                    session_data.request.mbap.raw = self._recv_all(7)
                     request_pdu = self._recv_all(session_data.request.mbap.length - 1)
 
                     # Application-layer filtering: Check and set pdu header if valid @raw.setter from PDU class
@@ -166,7 +170,9 @@ class CustomModbusServer(BaseModbusServer):
                     self.server.engine(session_data)
                     # send the tx pdu with the last rx mbap (only length field change)
                     self._send_all(session_data.response.raw)
-                    logger.info("-----------------------------------------\n\n")
+                    send_response_time = time.time()
+                    logger.info(f"Response is sent back to modbus-client at {send_response_time}")
+                    logger.info(f"Round-Trip-Time of packet at Server : {send_response_time - receive_request_time}\n\n")
             except (BaseModbusServer.Error, socket.error) as e:
                 # debug message
                 logger.debug('Exception during request handling: %r', e)
@@ -225,6 +231,7 @@ class CustomModbusServer(BaseModbusServer):
             logging.info(f"protocol_id: {protocol_id}")
             logging.info(f"length: {length}")
             logging.info(f"unit_id: {unit_id}")
+            logging.info("-------------------------------")
 
     def _read_words(self, session_data):
         """
@@ -246,7 +253,7 @@ class CustomModbusServer(BaseModbusServer):
                               "read from register: ",
                               quantity_regs,
                               "number of register: ",
-                              "pdu body of request to read holding registers")
+                              "Request PDU: ")
         # check quantity of requested words
         if 0x0001 <= quantity_regs <= 0x007D:
             # data handler read request: for holding or input registers space
@@ -265,7 +272,7 @@ class CustomModbusServer(BaseModbusServer):
                                       "read value: ",
                                       quantity_regs,
                                       "number of register: ",
-                                      "response from read single register request")
+                                      "Response PDU:")
             else:
                 send_pdu.build_except(recv_pdu.func_code, ret_hdl.exp_code)
         else:
@@ -289,7 +296,7 @@ class CustomModbusServer(BaseModbusServer):
                               "write to register ",
                               reg_value,
                               "written value ",
-                              "pdu body of request to write single register")
+                              "Request PDU:")
         # data handler update request
         ret_hdl = self.data_hdl.write_h_regs(reg_addr, [reg_value], session_data.srv_info)
         # format regular or except response
@@ -300,7 +307,7 @@ class CustomModbusServer(BaseModbusServer):
                                   "register address ",
                                   reg_value,
                                   "writen value ",
-                                  "response from write single register request")
+                                  "Response PDU:")
         else:
             send_pdu.build_except(recv_pdu.func_code, ret_hdl.exp_code)
 
@@ -310,3 +317,4 @@ class CustomModbusServer(BaseModbusServer):
         logging.info(f"function_code: {function_code}")
         logging.info(f"{msg_value_1}: {value_1}")
         logging.info(f"{msg_value_2}: {value_2}")
+        logging.info("-------------------------------")
