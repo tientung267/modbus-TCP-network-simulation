@@ -49,7 +49,7 @@ Eine ungerade Länge stellt das Bit 1 dar.
 Wenn die Länge der aktuellen Modbus/TCP Paket mit den zu verschlüsselte Bit nicht übereinstimmt, wird die Länge um 1 erhöht, um von gerade auf ungerade oder umgekehrt zu wechseln. Ein "dummy"-Byte wird dazu in pdu Payload hinzugefügt.
 
 ### Methodeanwendung:
-Zur Anwendung einer der beiden Methode in dem Experiment kann man die Umgebungsvariable in `docker-compose.yml` setzen (`APPLY_INTER_PACKET_TIMES` in client und gateway containers für t1 oder `APPLY_SIZE_MODULATION` in server und gateway containers für s1 mit einem beliebigen Wert). Für Beispiel siehe `docker-compose.yml`. Bei Default wird inter-packet-times method angewendet (`APPLY_INTER_PACKET_TIMES` wurde gesetzt)
+Zur Anwendung einer der beiden Methode in dem Experiment kann man die Umgebungsvariable in `docker-compose.yml` setzen (`APPLY_INTER_PACKET_TIMES` in client und proxy containers für t1 oder `APPLY_SIZE_MODULATION` in server und proxy containers für s1 mit einem beliebigen Wert). Für Beispiel siehe `docker-compose.yml`. Bei Default wird inter-packet-times method angewendet (`APPLY_INTER_PACKET_TIMES` wurde gesetzt)
   
 ### Einbettung: Das Einbetten werden in Segment B ausgeführt
 ### Auslesen des eingebetteten Nachrichts: 
@@ -75,12 +75,12 @@ Zum Ausführen der Container wird zunächst der Anwendungsquellcode in ein Docke
 - System-Tools und -Anwendungen
     
 Alle Images dieses Experiments werden in einem Repository auf Docker Hub öffentlich zur Verfügung gestellt:
-- Gateway-Serer image (Für Segment B): https://hub.docker.com/repository/docker/tientungnguyen/gateway-server-image/general
+- Proxy-Serer image (Für Segment B): https://hub.docker.com/repository/docker/tientungnguyen/gateway-server-image/general
 - Modbus-Klient image (Für Segment A): https://hub.docker.com/repository/docker/tientungnguyen/modbus-client-image/general
 - Modbus-Server image (Für Segment C): https://hub.docker.com/repository/docker/tientungnguyen/modbus-server-image/general
 
 ### Docker-compose.yml
-Die Datei `docker-compose.yml` ermöglicht das gleichzeitige Ausführen aller drei Container in einem gemeinsamen Netzwerk. Die Ports der Applikationen werden jeweils einem Container-Port zugeordnet. Der Modbus-Klient lauscht auf Port 3000, der Gateway-Server auf Port 500, und der Modbus-Server auf Port 502. Die drei Containers kommunizieren miteinander über Containerports und mit Containernamen.
+Die Datei `docker-compose.yml` ermöglicht das gleichzeitige Ausführen aller drei Container in einem gemeinsamen Netzwerk. Die Ports der Applikationen werden jeweils einem Container-Port zugeordnet. Der Modbus-Klient lauscht auf Port 3000, der Proxy-Server auf Port 500, und der Modbus-Server auf Port 502. Die drei Containers kommunizieren miteinander über Containerports und mit Containernamen.
 
 ### Logdatei speichern
 In der `docker-compose.yml` werden die `stdout` und `stderr` der Container in `.log`-Dateien umgeleitet. Durch die Verwendung von Docker-Volumes können die Logdateien dauerhaft gespeichert werden:
@@ -92,6 +92,6 @@ In der `docker-compose.yml` werden die `stdout` und `stderr` der Container in `.
   - Zum Starten: docker compose up
   - Zum Beenden: docker compose down
 - **Mit `Dockerfile`**: Für jedes Segment ist ein eigenes Dockerfile definiert, mit dem ein Image gebaut und dann als Container ausgeführt werden kann.
-  - Reihenfolge: Zuerst muss der Server gestartet werden, gefolgt vom Gateway-Server und schließlich dem Client.
+  - Reihenfolge: Zuerst muss der Server gestartet werden, gefolgt vom Proxy-Server und schließlich dem Client.
   - Alle Container müssen in einem gemeinsamen Netzwerk laufen, daher sollte ein Docker-Netzwerk erstellt werden.
-- **Ohne Docker**: Das Experiment kann auch ohne Docker ausgeführt werden. In diesem Fall haben alle Segmente standardmäßig den Hostnamen localhost. In jedem Segment gibt es eine Startdatei (`StartServer`, `StartGatewayServer` und `StartClient`), um die jeweiligen Segmente manuell zu starten.
+- **Ohne Docker**: Das Experiment kann auch ohne Docker ausgeführt werden. In diesem Fall haben alle Segmente standardmäßig den Hostnamen localhost. In jedem Segment gibt es eine Startdatei (`StartServer`, `StartProxyServer` und `StartClient`), um die jeweiligen Segmente manuell zu starten.

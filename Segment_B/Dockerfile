@@ -15,10 +15,10 @@ RUN pip install -r  requirements.txt
 EXPOSE 500
 
 ## 6. Set envrionment variables
-ENV GATEWAY_SERVER_NAME=gateway-server
+ENV PROXY_SERVER_NAME=proxy-server
 ENV MODBUS_SERVER_NAME=modbus-server
 
 ## 7. Define the command to run when the container starts.
-CMD ["python", "-u", "StartGatewayServer.py"]
+CMD ["python", "-u", "StartProxyServer.py"]
 
 #-u option to force unbuffered output

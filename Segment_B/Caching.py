@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 
 class Caching:
-    """This class simulates caching mechanism. when response from read single holding register arrives at gateway server
+    """This class simulates caching mechanism. when response from read single holding register arrives at proxy server
         , its value will be saved in cache. After an amount of time (10 seconds) this value will be removed, or when new
         value is written to this holding register."""
 

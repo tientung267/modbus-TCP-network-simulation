@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
                     handlers=[logging.StreamHandler(sys.stdout)])
 
 class ReadMsgT1:
-    """This class extract hidden message from Gateway server embedded with inter-packet-time methods"""
+    """This class extract hidden message from proxy server embedded with inter-packet-time methods"""
     hidden_message_t1 = ''
     msg_bits = ''
     bits_message_counter = 0

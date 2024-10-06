@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 HEADER_BITS_LENGTH = 10
 
 class ReadMsgS1:
-    """This class is used to extract hidden messages from Gateway Server embedded with size-modulation methods"""
+    """This class is used to extract hidden messages from Proxy Server embedded with size-modulation methods"""
     hidden_message_s1 = ''
     msg_bits = ''
     bits_message_counter = 0
@@ -105,7 +105,7 @@ class CustomModbusServer(BaseModbusServer):
         def server_running(self):
             return self.server.evt_running.is_set()
 
-        def _send_all(self, data):  # Override this method in gateway to send request to the next server
+        def _send_all(self, data):
             try:
                 self.request.sendall(data)
                 return True
@@ -150,12 +150,12 @@ class CustomModbusServer(BaseModbusServer):
                     # init session data for new request
                     session_data.new_request()
 
-                    # Application-layer filtering: Check and set mbap header if valid @raw.setter from MBAP class
                     # receive mbap from client
                     logger.info("A request is received")
                     receive_request_time = time.time()
                     logger.info(f"Request arrives modbus-server at {receive_request_time}")
 
+                    # Application-layer filtering: Check and set mbap header if valid @raw.setter from MBAP class
                     session_data.request.mbap.raw = self._recv_all(7)
                     request_pdu = self._recv_all(session_data.request.mbap.length - 1)
 
