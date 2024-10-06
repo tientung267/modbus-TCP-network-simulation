@@ -57,10 +57,10 @@ def pdu_body_logging(function_code, pdu_body, request):
 def calculate_and_log_rtt(response_source, forward_response_time, receive_request_time):
     """ Utility for calculating RTT"""
     logging.info(f"Forward response from {response_source} to modbus-client")
-    logging.info(f"Round-Trip-Time at gateway-server: {forward_response_time - receive_request_time}\n\n")
+    logging.info(f"Round-Trip-Time at proxy-server: {forward_response_time - receive_request_time}\n\n")
 
 def connect_to_server(server_address):
-    """Connect gateway server with modbus server"""
+    """Connect proxy server with modbus server"""
     try:
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_socket.connect(server_address)
@@ -71,7 +71,7 @@ def connect_to_server(server_address):
 def apply_size_modulation():
     if os.getenv('APPLY_SIZE_MODULATION', False):
         steg_s1 = S1SizeModulation()
-        steg_s1.set_embedded_message(S1_STEG_MESS)
+        steg_s1.convert_steganography_message_to_bits(S1_STEG_MESS)
         logging.info("applying size modulation")
         # Each character in steganography will be encoded by 8 bits, which represent ASCII number of that character.
         # 8 first bits represent number of characters in the message
@@ -90,7 +90,7 @@ def apply_inter_packet_times():
     return None, 0
 
 def close_connection(client_socket, server_socket):
-    """close connection from gateway server to modbus-client and modbus-server"""
+    """close connection from proxy server to modbus-client and modbus-server"""
     client_socket.close()
     logging.info("Client socket closed")
     server_socket.close()
@@ -105,7 +105,7 @@ def handle_client(client_socket, server_address):
     # Network will be throttled every 30 seconds. The throttling last for 10 seconds.
     # In this ten seconds period, each request will be delayed for 1 seconds
     rate_limiting = RateLimiting()
-    gateway_cache = Caching()
+    proxy_cache = Caching()
     # Object to apply steganography methode size modulation
     steg_s1, num_bits_embedded_s1 = apply_size_modulation()
     # Object to apply steganography methode inter-packet-times
@@ -116,7 +116,7 @@ def handle_client(client_socket, server_address):
             modbus_client_request = client_socket.recv(1024)
             # Time when the Modbus/TCP request is received
             receive_request_time = time.time()
-            logging.info(f"Request arrives gateway server at {receive_request_time}")
+            logging.info(f"Request arrives proxy server at {receive_request_time}")
 
             request_mbap_header = modbus_client_request[:7]
             request_pdu_body = modbus_client_request[7:]
@@ -128,7 +128,7 @@ def handle_client(client_socket, server_address):
 
             # Check in cache if register value is available
             if function_code == 3:
-                response_from_cache = gateway_cache.check_if_value_in_cache(request_pdu_body,
+                response_from_cache = proxy_cache.check_if_value_in_cache(request_pdu_body,
                                                                             transaction_id,
                                                                             protocol_id,
                                                                             unit_id)
@@ -142,8 +142,8 @@ def handle_client(client_socket, server_address):
             elif function_code == 6:
                 # If an existing value in cache is overwritten, this value will be removed from cache
                 function_code, writing_address, value = struct.unpack('>BHH', request_pdu_body)
-                gateway_cache.clean_cache(writing_address)
-                logging.info(f"cache after being cleaned {gateway_cache.cache}")
+                proxy_cache.clean_cache(writing_address)
+                logging.info(f"cache after being cleaned {proxy_cache.cache}")
 
             if steg_s1 is not None and num_bits_embedded_s1 > 0:
                 # embed steganography in request
@@ -197,8 +197,8 @@ def handle_client(client_socket, server_address):
             if function_code == 3:
                 (_, read_address, _) = struct.unpack('>BHH', request_pdu_body[:5])
                 (_, _, read_data) = struct.unpack('>BBH', modbus_server_response[7:11])
-                gateway_cache.set_cache_data(read_address, read_data)
-                logging.info(f"New value added to cache: {gateway_cache.cache}")
+                proxy_cache.set_cache_data(read_address, read_data)
+                logging.info(f"New value added to cache: {proxy_cache.cache}")
 
             # Protocol normalisation from response from server to request
             normalised_response = ProtocolNormalisation.protocol_normalisation(response_mbap_header,
@@ -215,23 +215,23 @@ def handle_client(client_socket, server_address):
     finally:
         close_connection(client_socket, server_socket)
 
-def start_gateway(host='localhost', port=500, server_address=('localhost', 502)):
-    """Start the gateway server. Gateway server is a socket, which receives request from Modbus-Client and forwards it
-        to the Modbus-Server. The Response from Server back to Client also has to go through gateway server. On the
+def start_proxy(host='localhost', port=500, server_address=('localhost', 502)):
+    """Start the proxy server. Proxy server is a socket, which receives request from Modbus-Client and forwards it
+        to the Modbus-Server. The Response from Server back to Client also has to go through proxy server. On the
         Server three mechanism will be applied: Caching, Network throttling in routine and protocol normalisation."""
 
-    # Create a TCP/IP socket for the gateway server
-    gateway_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    gateway_socket.bind((host, port))
-    gateway_socket.listen(NUM_CLIENT)
-    gateway_socket.settimeout(SOCKET_TIMEOUTS)
-    logging.info(f"Gateway server running on {host}:{port}, forwarding to server at {server_address}")
+    # Create a TCP/IP socket for the proxy server
+    proxy_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    proxy_socket.bind((host, port))
+    proxy_socket.listen(NUM_CLIENT)
+    proxy_socket.settimeout(SOCKET_TIMEOUTS)
+    logging.info(f"Proxy server running on {host}:{port}, forwarding to server at {server_address}")
 
     try:
         while True:
             try:
                 # Wait for a connection from a client
-                client_socket, client_address = gateway_socket.accept()
+                client_socket, client_address = proxy_socket.accept()
                 logging.info(f"Connection from client {client_address}")
 
                 # Start a new thread to handle the client
@@ -241,15 +241,15 @@ def start_gateway(host='localhost', port=500, server_address=('localhost', 502))
                 # Timeout occurs every 1.1 second, continue the loop and check for interrupt
                 continue
     except KeyboardInterrupt:
-        logging.info("Gateway server shutting down.")
+        logging.info("Proxy server shutting down.")
     finally:
-        gateway_socket.close()
-        logging.info("Gateway server socket closed.")
+        proxy_socket.close()
+        logging.info("Proxy server socket closed.")
 
 
 # the environment variables will be set in docker-compose file
 modbus_server_name = os.getenv('MODBUS_SERVER_NAME', 'localhost')
-gateway_server_name = os.getenv('GATEWAY_SERVER_NAME', 'localhost')
+proxy_server_name = os.getenv('PROXY_SERVER_NAME', 'localhost')
 
-# Start the gateway server
-start_gateway(host=gateway_server_name, port=500, server_address=(modbus_server_name, 502))
+# Start the proxy server
+start_proxy(host=proxy_server_name, port=500, server_address=(modbus_server_name, 502))

@@ -9,20 +9,20 @@ services:
     volumes:
       - modbus-network-data:/app/logs
     command: sh -c "python StartServer.py > /app/logs/modbus-server.log 2>&1"
-  gateway-server:
-    image: tientungnguyen/gateway-server-image:0.0.1
-    container_name: gateway-server
+  proxy-server:
+    image: tientungnguyen/proxy-server-image:0.0.1
+    container_name: proxy-server
     ports:
       - "500:500"
     environment:
-      - GATEWAY_SERVER_NAME=gateway-server
+      - PROXY_SERVER_NAME=proxy-server
       - MODBUS_SERVER_NAME=modbus-server
-      - APPLY_INTER_PACKET_TIMES=True # Bei Default Inter-Packet-Time wird im Gateway-Server angewendet
+      - APPLY_INTER_PACKET_TIMES=True # Bei Default Inter-Packet-Time wird im Proxy-Server angewendet
     depends_on:
       - modbus-server
     volumes:
       - modbus-network-data:/app/logs
-    command: sh -c "python StartGatewayServer.py > /app/logs/gateway-server.log 2>&1"
+    command: sh -c "python StartProxyServer.py > /app/logs/proxy-server.log 2>&1"
   modbus-client:
     image: tientungnguyen/modbus-client-image:0.0.1
     container_name: modbus-client
@@ -30,11 +30,11 @@ services:
       - "3000:3000"
     environment:
       - MODBUS_CLIENT_NAME=modbus-client
-      - GATEWAY_SERVER_NAME=gateway-server
+      - PROXY_SERVER_NAME=proxy-server
       - MODBUS_CLIENT_PORT=3000
       - APPLY_INTER_PACKET_TIMES=True
     depends_on:
-      - gateway-server
+      - proxy-server
     volumes:
       - modbus-network-data:/app/logs
     command: sh -c "python StartClient.py > /app/logs/modbus-client.log 2>&1"

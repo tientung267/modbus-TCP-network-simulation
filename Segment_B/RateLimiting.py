@@ -7,8 +7,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
                     handlers=[logging.StreamHandler(sys.stdout)])
 
 class RateLimiting:
-    """This class simulates Network throttling mechanism. The gateway server will be scheduled to reduce network traffic
-        through it. After a specific time the network will be throttled. Request will be delayed at gateway Server for
+    """This class simulates Network throttling mechanism. The proxy server will be scheduled to reduce network traffic
+        through it. After a specific time the network will be throttled. Request will be delayed at proxy server for
         a certain time. """
     def __init__(self):
         self._last_delay = time.time()

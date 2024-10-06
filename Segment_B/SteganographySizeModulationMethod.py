@@ -7,7 +7,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
                     handlers=[logging.StreamHandler(sys.stdout)])
 
 def add_one_byte_response(mbap_header_tuple, function_code, pdu_body_raw):
-    """Scenario: response is received at the gateway server and is added 1 byte at the end of the message"""
+    """Scenario: response is received at the proxy server and is added 1 byte at the end of the message"""
 
     (transaction_id, protocol_id, length, unit_id) = mbap_header_tuple
 
@@ -22,7 +22,7 @@ def add_one_byte_response(mbap_header_tuple, function_code, pdu_body_raw):
     return new_mbap_header + pdu_body_raw + struct.pack('B', 3)
 
 def add_one_byte_request(mbap_header_tuple, function_code, pdu_body_raw):
-    """Scenario: request from client is received at the gateway server and is added 1 byte at the end of the message"""
+    """Scenario: request from client is received at the proxy server and is added 1 byte at the end of the message"""
     (transaction_id, protocol_id, length, unit_id) = mbap_header_tuple
 
     if function_code == 3 or function_code == 6:
@@ -83,7 +83,7 @@ class S1SizeModulation:
             logging.info(f"current bit {current_bit}, payload length {mbap_header_tuple[2]}, 1 byte will be added")
             return add_one_byte_request(mbap_header_tuple, function_code, pdu_body)
 
-    def set_embedded_message(self, steganography_message):
+    def convert_steganography_message_to_bits(self, steganography_message):
         """The steganography message will be converted in a sequence of bits. Each Character of the message (
         including space character) will be converted in it corresponding number in ASCII table. After that this
         number will be represented by a sequence of 7 bits. The first 10 bits in the sequence represent the number of

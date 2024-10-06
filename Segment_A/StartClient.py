@@ -4,14 +4,15 @@ import random
 import logging
 import sys
 from CustomModbusClient import CustomModbusClient
-from constants import STARTING_ADDRESS, REQUEST_DURATION, GATEWAY_SERVER_PORT
+from constants import STARTING_ADDRESS, REQUEST_DURATION, PROXY_SERVER_PORT
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',
                     handlers=[logging.StreamHandler(sys.stdout)])
 
-gateway_server_name = os.getenv('GATEWAY_SERVER_NAME', 'localhost')
+proxy_server_name = os.getenv('PROXY_SERVER_NAME', 'localhost')
 
-client = CustomModbusClient(host=gateway_server_name, port=GATEWAY_SERVER_PORT, auto_open=True)
+client = CustomModbusClient(host=proxy_server_name, port=PROXY_SERVER_PORT, auto_open=True)
 
 
 def read_holding_register():
@@ -48,7 +49,7 @@ try:
     # Check if client is opened for connection. If not, try to open a new connection
     if not client.is_open:
         if not client.open():
-            logging.error(f"Failed to connect to {gateway_server_name}:{GATEWAY_SERVER_PORT}")
+            logging.error(f"Failed to connect to {proxy_server_name}:{PROXY_SERVER_PORT}")
             sys.exit(1)
 
     register_num_to_read = 1  # In this experiment we only consider reading single holding register
@@ -57,7 +58,7 @@ try:
 
     while time.time() - start_time < REQUEST_DURATION:
         if not client.is_open:
-            logging.error(f"Connection to {gateway_server_name}:{GATEWAY_SERVER_PORT} is not open \n")
+            logging.error(f"Connection to {proxy_server_name}:{PROXY_SERVER_PORT} is not open \n")
             logging.info(f"Try to connect again...")
             client.open()
             continue
