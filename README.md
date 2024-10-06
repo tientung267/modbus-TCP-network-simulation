@@ -75,7 +75,7 @@ Zum Ausführen der Container wird zunächst der Anwendungsquellcode in ein Docke
 - System-Tools und -Anwendungen
     
 Alle Images dieses Experiments werden in einem Repository auf Docker Hub öffentlich zur Verfügung gestellt:
-- Proxy-Serer image (Für Segment B): https://hub.docker.com/repository/docker/tientungnguyen/gateway-server-image/general
+- Proxy-Serer image (Für Segment B): https://hub.docker.com/repository/docker/tientungnguyen/proxy-server-image/general
 - Modbus-Klient image (Für Segment A): https://hub.docker.com/repository/docker/tientungnguyen/modbus-client-image/general
 - Modbus-Server image (Für Segment C): https://hub.docker.com/repository/docker/tientungnguyen/modbus-server-image/general
 
