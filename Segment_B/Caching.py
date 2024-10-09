@@ -2,6 +2,7 @@ import struct
 import time
 import logging
 import sys
+
 from constants import CACHE_TTL
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',
@@ -62,7 +63,7 @@ class Caching:
     def check_if_value_in_cache(self, pdu_body, transaction_id, protocol_id, unit_id):
         """If the value to read is in cache and valid, a response will be created and send back to client"""
         # Parse the address and quantity from the request
-        function_code, start_address, quantity = struct.unpack('>BHH', pdu_body)
+        function_code, start_address, quantity_to_read = struct.unpack('>BHH', pdu_body)
 
         # Check cache for the requested register
         if self._get_cached_data(start_address) is not None:
@@ -72,12 +73,29 @@ class Caching:
             # 2 byte length of read data, 2 byte for read data from 1 register
             length_pdu_response = 5
             response = (struct.pack('>HHHB', transaction_id, protocol_id, length_pdu_response, unit_id)
-                        + struct.pack('>BBH', function_code, quantity * 2, cache_data))
+                        + struct.pack('>BBH', function_code, quantity_to_read * 2, cache_data))
+            logging.info(f"Cache hit, build response from Cache:")
+            self.mbap_header_logging(transaction_id, protocol_id, length_pdu_response, unit_id)
 
-            logging.info(f"cache hit, response from Cache:")
-            logging.info(f"function_code: {function_code}")
-            logging.info(f"register_address: {start_address}")
-            logging.info(f"cache_value: {cache_data}")
+            self.log_response_pdu(function_code, quantity_to_read, cache_data)
             return response
         else:
             return None
+
+    @staticmethod
+    def mbap_header_logging(transaction_id, protocol_id, length, unit_id):
+        """Log out the header of a modbus/TCP packet"""
+        logging.info(f"Response header:")
+        logging.info(f"Response_TID: {transaction_id}")
+        logging.info(f"Response_PID: {protocol_id}")
+        logging.info(f"Response_LF: {length}")
+        logging.info(f"Response_UID: {unit_id}")
+        logging.info("----------------------------------")
+
+    @staticmethod
+    def log_response_pdu(function_code, quantity_to_read, cache_value):
+        logging.info(f"Response PDU:")
+        logging.info(f"Response_FC: {function_code}")
+        logging.info(f"Num_bytes_to_read: {quantity_to_read * 2}")
+        logging.info(f"Cache_value: {cache_value}")
+        logging.info("----------------------------------")
