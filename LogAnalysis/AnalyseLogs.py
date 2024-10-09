@@ -26,7 +26,6 @@ class ModbusLogAnalyser:
         transaction_ids_req_str = re.findall(r'Request_TID: (\d+)', self._log_data)
         # Convert to integers for further analysis
         transaction_ids_req_int = list(map(int, transaction_ids_req_str))
-        print(transaction_ids_req_int)
 
         # Regular expression to find all transaction_ids of responses in the log
         transaction_ids_resp_str = re.findall(r'Response_TID: (\d+)', self._log_data)
@@ -181,7 +180,7 @@ class ModbusLogAnalyser:
         round_trip_times_str = re.findall(r'(?i)round-trip-time.*:\s*(\d+\.\d*)', self._log_data)
 
         rtt_int_list = list(map(float, round_trip_times_str))
-        print(rtt_int_list)
+
         mean_rtt = round(statistics.mean(rtt_int_list), 4)
         logging.info(f"Mean of all RTT values: {mean_rtt}")
 
