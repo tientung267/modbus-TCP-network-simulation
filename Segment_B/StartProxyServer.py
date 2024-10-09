@@ -19,17 +19,17 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 def mbap_header_logging(transaction_id, protocol_id, length, unit_id, source):
     """Log out the header of a modbus/TCP packet"""
     logging.info(f"{source} header:")
-    logging.info(f"transaction_id: {transaction_id}")
-    logging.info(f"protocol_id: {protocol_id}")
-    logging.info(f"length: {length}")
-    logging.info(f"unit_id: {unit_id}")
+    logging.info(f"{source}_TID: {transaction_id}")
+    logging.info(f"{source}_PID: {protocol_id}")
+    logging.info(f"{source}_LF: {length}")
+    logging.info(f"{source}_UID: {unit_id}")
     logging.info("----------------------------------")
 
-def pdu_body_logging(function_code, pdu_body, request):
+def pdu_body_logging(function_code, pdu_body, packet_type):
     """Log out the pdu payload of a modbus/TCP packet"""
     if function_code == 3:
         # Read holding Register, only one register is read each time
-        if request:
+        if packet_type == "Request":
             pdu_body_truncate = pdu_body[:4]
             logging.info("Request PDU:")
             (starting_address, quantity_to_read) = struct.unpack(">HH", pdu_body_truncate)
@@ -39,19 +39,19 @@ def pdu_body_logging(function_code, pdu_body, request):
             pdu_body_truncate = pdu_body[:3]
             logging.info("Response PDU:")
             (num_bytes_to_read, read_value) = struct.unpack(">BH", pdu_body_truncate)
-            logging.info(f"num_bytes_to_read: {num_bytes_to_read}")
-            logging.info(f"read_value: {read_value}")
+            logging.info(f"Num_bytes_to_read: {num_bytes_to_read}")
+            logging.info(f"Read_value: {read_value}")
     elif function_code == 6:
         # write holding register, in this experiment, only one register value is written each time
         pdu_body_truncate = pdu_body[:4]
-        if request:
-            logging.info("Protocol Data Unit of Request:")
+        if packet_type == "Request":
+            logging.info("Request PDU:")
         else:
-            logging.info("Protocol Data Unit of Response:")
+            logging.info("Response PDU:")
         (writing_address, writing_value) = struct.unpack(">HH", pdu_body_truncate)
         logging.info(f"writing_address: {writing_address}")
         logging.info(f"writing_value: {writing_value}")
-    logging.info(f"function_code: {function_code}")
+    logging.info(f"{packet_type}_FC: {function_code}")
     logging.info("----------------------------------")
 
 def calculate_and_log_rtt(response_source, forward_response_time, receive_request_time):
@@ -124,7 +124,7 @@ def handle_client(client_socket, server_address):
             (transaction_id, protocol_id, length, unit_id) = struct.unpack('>HHHB', request_mbap_header)
             function_code = struct.unpack('B', request_pdu_body[:1])[0]
             mbap_header_logging(transaction_id, protocol_id, length, unit_id, "Request")
-            pdu_body_logging(function_code, request_pdu_body[1:], True)
+            pdu_body_logging(function_code, request_pdu_body[1:], "Request")
 
             # Check in cache if register value is available
             if function_code == 3:
@@ -192,7 +192,7 @@ def handle_client(client_socket, server_address):
 
             response_pdu_body = modbus_server_response[7:]
             function_code = struct.unpack('B', response_pdu_body[:1])[0]
-            pdu_body_logging(function_code, response_pdu_body[1:], False)
+            pdu_body_logging(function_code, response_pdu_body[1:], "Response")
 
             if function_code == 3:
                 (_, read_address, _) = struct.unpack('>BHH', request_pdu_body[:5])

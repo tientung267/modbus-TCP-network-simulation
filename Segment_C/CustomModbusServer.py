@@ -212,7 +212,7 @@ class CustomModbusServer(BaseModbusServer):
                                      self.protocol_id,
                                      self.length,
                                      self.unit_id,
-                                     "request header: ")
+                                     "Request")
             # Check if there is hidden message to read
             if os.getenv('APPLY_SIZE_MODULATION', False):
                 if not ReadMsgS1.stop_read_msg:
@@ -225,13 +225,13 @@ class CustomModbusServer(BaseModbusServer):
                 raise BaseModbusServer.DataFormatError('MBAP length must be between 2 and 256')
 
         @staticmethod
-        def mbap_header_logging(transaction_id, protocol_id, length, unit_id, message):
-            logging.info(message)
-            logging.info(f"transaction_id: {transaction_id}")
-            logging.info(f"protocol_id: {protocol_id}")
-            logging.info(f"length: {length}")
-            logging.info(f"unit_id: {unit_id}")
-            logging.info("-------------------------------")
+        def mbap_header_logging(transaction_id, protocol_id, length, unit_id, packet_type):
+            logging.info(f"{packet_type} header:")
+            logging.info(f"{packet_type}_TID: {transaction_id}")
+            logging.info(f"{packet_type}_PID: {protocol_id}")
+            logging.info(f"{packet_type}_LF: {length}")
+            logging.info(f"{packet_type}_UID: {unit_id}")
+            logging.info("----------------------------------")
 
     def _read_words(self, session_data):
         """
@@ -253,7 +253,7 @@ class CustomModbusServer(BaseModbusServer):
                               "read from register: ",
                               quantity_regs,
                               "number of register: ",
-                              "Request PDU: ")
+                              "Request")
         # check quantity of requested words
         if 0x0001 <= quantity_regs <= 0x007D:
             # data handler read request: for holding or input registers space
@@ -272,7 +272,7 @@ class CustomModbusServer(BaseModbusServer):
                                       "read value: ",
                                       quantity_regs,
                                       "number of register: ",
-                                      "Response PDU:")
+                                      "Response")
             else:
                 send_pdu.build_except(recv_pdu.func_code, ret_hdl.exp_code)
         else:
@@ -296,7 +296,7 @@ class CustomModbusServer(BaseModbusServer):
                               "write to register ",
                               reg_value,
                               "written value ",
-                              "Request PDU:")
+                              "Request")
         # data handler update request
         ret_hdl = self.data_hdl.write_h_regs(reg_addr, [reg_value], session_data.srv_info)
         # format regular or except response
@@ -307,14 +307,14 @@ class CustomModbusServer(BaseModbusServer):
                                   "register address ",
                                   reg_value,
                                   "writen value ",
-                                  "Response PDU:")
+                                  "Response")
         else:
             send_pdu.build_except(recv_pdu.func_code, ret_hdl.exp_code)
 
     @staticmethod
-    def pdu_body_logging(function_code, value_1, msg_value_1, value_2, msg_value_2, msg_pdu_body):
-        logging.info(msg_pdu_body)
-        logging.info(f"function_code: {function_code}")
+    def pdu_body_logging(function_code, value_1, msg_value_1, value_2, msg_value_2, packet_type):
+        logging.info(f"{packet_type} PDU:")
+        logging.info(f"{packet_type}_FC: {function_code}")
         logging.info(f"{msg_value_1}: {value_1}")
         logging.info(f"{msg_value_2}: {value_2}")
         logging.info("-------------------------------")

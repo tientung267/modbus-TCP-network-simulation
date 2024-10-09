@@ -159,8 +159,8 @@ class CustomModbusClient(BaseModbusClient):
         length = len(pdu) + 1
         mbap = struct.pack('>HHHB', self._transaction_id, protocol_id, length, self.unit_id)
 
-        self.mbap_header_logging(self._transaction_id, protocol_id, length, self.unit_id, "request header:")
-        self.pdu_body_logging(pdu, True)
+        self.mbap_header_logging(self._transaction_id, protocol_id, length, self.unit_id, "Request")
+        self.pdu_body_logging(pdu, "Request")
         # full modbus/TCP frame = [MBAP]PDU
 
         return mbap + pdu
@@ -210,7 +210,7 @@ class CustomModbusClient(BaseModbusClient):
 
     def check_response_mbap_header(self, f_transaction_id, f_protocol_id, f_length, f_unit_id, rx_mbap):
         # print out Response header
-        self.mbap_header_logging(f_transaction_id, f_protocol_id, f_length, f_unit_id, "response header:")
+        self.mbap_header_logging(f_transaction_id, f_protocol_id, f_length, f_unit_id, "Response")
 
         # check MBAP fields
         f_transaction_err = f_transaction_id != self._transaction_id
@@ -227,7 +227,7 @@ class CustomModbusClient(BaseModbusClient):
     def check_response_pdu_body(self, rx_pdu, min_len):
         # check function code from recv PDU
         rx_function_code = struct.unpack('B', rx_pdu[0:1])[0]
-        self.pdu_body_logging(rx_pdu, False)
+        self.pdu_body_logging(rx_pdu, "Response")
         if rx_function_code != 3 and rx_function_code != 6:
             raise BaseModbusClient._NetworkError(4, 'Function code is not 3 or 6')
 
@@ -245,18 +245,17 @@ class CustomModbusClient(BaseModbusClient):
             raise BaseModbusClient._NetworkError(4, 'PDU length is too short for current request')
 
     @staticmethod
-    def mbap_header_logging(transaction_id, protocol_id, length, unit_id, message):
-        logging.info(message)
-        logging.info(f"transaction_id: {transaction_id}")
-        logging.info(f"protocol_id: {protocol_id}")
-        logging.info(f"length: {length}")
-        logging.info(f"unit_id: {unit_id}")
-        logging.info("---------------------------------")
+    def mbap_header_logging(transaction_id, protocol_id, length, unit_id, packet_type):
+        logging.info(f"{packet_type} header:")
+        logging.info(f"{packet_type}_TID: {transaction_id}")
+        logging.info(f"{packet_type}_PID: {protocol_id}")
+        logging.info(f"{packet_type}_LF: {length}")
+        logging.info(f"{packet_type}_UID: {unit_id}")
+        logging.info("----------------------------------")
 
     @staticmethod
-    def pdu_body_logging(pdu_body, request):
+    def pdu_body_logging(pdu_body, packet_type):
         function_code = struct.unpack('B', pdu_body[0:1])[0]
-        message = "Request PDU: " if request else "Response PDU: "
-        logging.info(f"{message}")
-        logging.info(f"function_code: {function_code}")
+        logging.info(f"{packet_type} PDU:")
+        logging.info(f"{packet_type}_FC: {function_code}")
         logging.info("---------------------------------")
