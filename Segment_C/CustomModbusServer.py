@@ -98,6 +98,8 @@ class CustomModbusServer(BaseModbusServer):
         @property
         def raw(self):
             self.mbap.length = len(self.pdu) + 1
+            logging.info(f"Response_LF: {self.mbap.length}")
+            logging.info("----------------------------------")
             return self.mbap.raw + self.pdu.raw
 
     class ModbusService(BaseModbusServer.ModbusService):
