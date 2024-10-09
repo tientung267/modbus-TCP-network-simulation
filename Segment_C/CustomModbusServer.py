@@ -150,14 +150,14 @@ class CustomModbusServer(BaseModbusServer):
                     # init session data for new request
                     session_data.new_request()
 
+                    # Application-layer filtering: Check and set mbap header if valid @raw.setter from MBAP class
+                    session_data.request.mbap.raw = self._recv_all(7)
+                    request_pdu = self._recv_all(session_data.request.mbap.length - 1)
+
                     # receive mbap from client
                     logger.info("A request is received")
                     receive_request_time = time.time()
                     logger.info(f"Request arrives modbus-server at {receive_request_time}")
-
-                    # Application-layer filtering: Check and set mbap header if valid @raw.setter from MBAP class
-                    session_data.request.mbap.raw = self._recv_all(7)
-                    request_pdu = self._recv_all(session_data.request.mbap.length - 1)
 
                     # Application-layer filtering: Check and set pdu header if valid @raw.setter from PDU class
                     self.request_pdu_filter(request_pdu)
