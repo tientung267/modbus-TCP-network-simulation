@@ -8,7 +8,11 @@ services:
       - MODBUS_SERVER_NAME=modbus-server
     volumes:
       - modbus-network-data:/app/logs
-    command: sh -c "python StartServer.py > /app/logs/modbus-server.log 2>&1"
+    command: sh -c "./firewall-rules.sh && python StartServer.py > /app/logs/modbus-server.log 2>&1"
+    privileged: true
+    networks:
+      modbus-network:
+        ipv4_address: 172.20.0.10  # Assign a static IP address
   proxy-server:
     image: tientungnguyen/proxy-server-image:0.0.1
     container_name: proxy-server
@@ -22,7 +26,11 @@ services:
       - modbus-server
     volumes:
       - modbus-network-data:/app/logs
-    command: sh -c "python StartProxyServer.py > /app/logs/proxy-server.log 2>&1"
+    command: sh -c "./firewall-rules.sh && python StartProxyServer.py > /app/logs/proxy-server.log 2>&1"
+    privileged: true
+    networks:
+      modbus-network:
+        ipv4_address: 172.20.0.11  # Assign a static IP address
   modbus-client:
     image: tientungnguyen/modbus-client-image:0.0.1
     container_name: modbus-client
@@ -37,6 +45,37 @@ services:
       - proxy-server
     volumes:
       - modbus-network-data:/app/logs
-    command: sh -c "python StartClient.py > /app/logs/modbus-client.log 2>&1"
+    command: sh -c "./firewall-rules.sh && python StartClient.py > /app/logs/modbus-client.log 2>&1"
+    privileged: true
+    networks:
+      modbus-network:
+        ipv4_address: 172.20.0.12  # Assign a static IP address
+  segmentCPaketCapture:
+    image: kaazing/tcpdump
+    network_mode: "service:modbus-server"
+    volumes:
+      - modbus-network-data:/tcpdump
+    command: [ "-v", "-i", "eth0", "-s", "0", "-w", "/tcpdump/SegmentC.pcap" ]
+  segmentAPaketCapture:
+    image: kaazing/tcpdump
+    network_mode: "service:modbus-client"
+    volumes:
+      - modbus-network-data:/tcpdump
+    command: [ "-v", "-i", "eth0", "-s", "0", "-w", "/tcpdump/SegmentA.pcap" ]
+  segmentBPaketCapture:
+    image: kaazing/tcpdump
+    network_mode: "service:proxy-server"
+    volumes:
+      - modbus-network-data:/tcpdump
+    command: [ "-v", "-i", "eth0", "-s", "0", "-w", "/tcpdump/SegmentB.pcap" ]
+
+
 volumes:
   modbus-network-data:
+
+networks:
+  modbus-network:   # Define the custom network
+    driver: bridge  # Optional, default driver is 'bridge'
+    ipam:
+      config:
+        - subnet : 172.20.0.0/16  #Define a subnet for the network
