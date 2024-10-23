@@ -8,17 +8,23 @@ WORKDIR /app
 ## 3. copy content of current directory(Segment_c) folder into /app directory
 COPY . .
 
-## 4. Install the dependencies
+# 4. Install nftables
+RUN apt-get update && apt-get install -y nftables && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+## 5. Install the dependencies
 RUN pip install -r requirements.txt
 
-## 5. Set Environment variable
+## 6. Apply firewall rules
+RUN chmod +x firewall-rules.sh
+
+## 6. Set Environment variable
 ENV MODBUS_CLIENT_NAME=modbus-client
 ENV MODBUS_CLIENT_PORT=3000
 
-## 6. Expose Port to other applications
-EXPOSE 3000
+## 8. Expose Port to other applications
+# EXPOSE 3000
 
-## 7. Define the command to run when the container starts.
+## 9. Define the command to run when the container starts.
 CMD ["python", "-u", "StartClient.py"]
 
 #-u option to force unbuffered output

@@ -8,17 +8,26 @@ WORKDIR /app
 ## 3. copy content of current directory (Segment_B) directory into /app directory
 COPY . .
 
+# Install nftables
+RUN apt-get update && apt-get install -y nftables && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 ## 4. Install the dependencies
 RUN pip install -r  requirements.txt
 
-## 5. Document and inform the developer that the application will use PORT 500 of the container.
-EXPOSE 500
+## 5. Install the dependencies
+RUN pip install -r  requirements.txt
 
-## 6. Set envrionment variables
+## 6. Apply firewall rules
+RUN chmod +x firewall-rules.sh
+
+## 7. Document and inform the developer that the application will use PORT 500 of the container.
+# EXPOSE 500
+
+## 8. Set envrionment variables
 ENV PROXY_SERVER_NAME=proxy-server
 ENV MODBUS_SERVER_NAME=modbus-server
 
-## 7. Define the command to run when the container starts.
+## 9. Define the command to run when the container starts.
 CMD ["python", "-u", "StartProxyServer.py"]
 
 #-u option to force unbuffered output
