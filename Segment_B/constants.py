@@ -13,3 +13,4 @@ DELAY_DURATION = 10  # Time in seconds indicates how long the throttling of the 
 NETWORK_THROTTLING_INTERVAL = 30  # Time in seconds after which no steganography delay should be applied
 NETWORK_THROTTLING_DURATION = 10  # After network throttling period, steganography delay can be applied again
 DUMMY_EMBEDDED_BYTE = 0
+PROXY_SERVER_PORT = 502
