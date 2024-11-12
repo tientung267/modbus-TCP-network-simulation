@@ -206,15 +206,15 @@ class ModbusLogAnalyser:
         # On server transaction_id isn't checked, because of caching, some packet will not arrive server at all.
         self.analyse_protocol_id(False)
         self.analyse_unit_id(False)
-        self.analyse_payload_length(False)
+        self.analyse_payload_length(True)
         self.analysing_rtt()
 
 
-proxyAnalyser = ModbusLogAnalyser("./NetworkCommunicationWithT1/proxy-server.log")
-proxyAnalyser.run_analysis_on_proxy_logs()
-logging.info("------------------------------------------------------------------")
-clientAnalyser = ModbusLogAnalyser("./NetworkCommunicationWithT1/modbus-client.log")
+clientAnalyser = ModbusLogAnalyser("./NetworktrafficWithoutSteganography/modbus-client.log")
 clientAnalyser.run_analysis_on_client_logs()
 logging.info("------------------------------------------------------------------")
-serverAnalyser = ModbusLogAnalyser("./NetworkCommunicationWithT1/modbus-server.log")
+proxyAnalyser = ModbusLogAnalyser("./NetworktrafficWithoutSteganography/proxy-server.log")
+proxyAnalyser.run_analysis_on_proxy_logs()
+logging.info("------------------------------------------------------------------")
+serverAnalyser = ModbusLogAnalyser("./NetworktrafficWithoutSteganography/modbus-server.log")
 serverAnalyser.run_analysis_on_server_logs()
