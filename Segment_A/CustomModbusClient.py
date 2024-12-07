@@ -4,7 +4,7 @@ import time
 import struct
 from socket import AF_UNSPEC, SOCK_STREAM
 from pyModbusTCP.client import ModbusClient as BaseModbusClient
-from constants import HEADER_BITS_LENGTH
+from constants import HEADER_BITS_LENGTH, THROTTLING_TIME, RTT_VARIANZ
 from pyModbusTCP.constants import MB_CONNECT_ERR,MB_SOCK_CLOSE_ERR, MB_SEND_ERR, MB_TIMEOUT_ERR
 import logging
 import sys
@@ -61,13 +61,14 @@ class ReadMsgT1:
     @staticmethod
     def delay_logic(rtt, function_code, bit_sequence):
         read_msg_changed = False
-        rtt_without_delay = round((rtt - int(rtt)) + 0.005, 2)
+        # In order to calculate steganography delay, throttling must be known beforehand by message receiver
+        rtt_without_delay = round(rtt - (THROTTLING_TIME if rtt > THROTTLING_TIME else 0) + RTT_VARIANZ, 2)
 
-        if 0.25 <= rtt_without_delay < 0.5 and function_code == 3:
+        if 0.25 <= rtt_without_delay < 0.49 and function_code == 3:
             bit_sequence += '1'
             read_msg_changed = True
 
-        if 0.25 <= rtt_without_delay < 0.5 and function_code == 6:
+        if 0.25 <= rtt_without_delay < 0.49 and function_code == 6:
             bit_sequence += '0'
             read_msg_changed = True
 

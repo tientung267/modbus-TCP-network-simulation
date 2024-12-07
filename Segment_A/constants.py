@@ -3,3 +3,5 @@ HEADER_BITS_LENGTH = 10  # 10 first bits in steganography message will be used t
 STARTING_ADDRESS = 0  # There are 100 holding registers in databank at server. There index start with 0
 PROXY_SERVER_PORT = 502
 REQUEST_DURATION = 1800
+THROTTLING_TIME = 0.5
+RTT_VARIANZ = 0.005

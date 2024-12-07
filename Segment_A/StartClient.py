@@ -63,13 +63,22 @@ try:
             client.open()
             continue
 
+        request_start_time = time.time()
         if counter % 2 == 0:
             read_holding_register()
         else:
             write_single_register()
 
+        # Calculate the time it took to receive a response
+        response_time = time.time() - request_start_time
+        # Wait for the remaining time to ensure at least 1 second wait
+        if response_time < 1:
+            time_to_wait = 1 - response_time
+            logging.debug(f"Response took {response_time:.4f} seconds. Waiting for {time_to_wait:.4f} more seconds.")
+            time.sleep(time_to_wait)
+
         counter += 1
-        time.sleep(1)
+
 
 finally:
     client.close()

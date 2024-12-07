@@ -6,7 +6,6 @@ services:
       - "502:502"
     environment:
       - MODBUS_SERVER_NAME=modbus-server
-      - APPLY_SIZE_MODULATION=True
     volumes:
       - modbus-network-data:/app/logs
     command: sh -c "./firewall-rules.sh && python StartServer.py > /app/logs/modbus-server.log 2>&1"
@@ -22,7 +21,7 @@ services:
     environment:
       - PROXY_SERVER_NAME=proxy-server
       - MODBUS_SERVER_NAME=modbus-server
-      - APPLY_SIZE_MODULATION=True # Bei Default Inter-Packet-Time wird im Proxy-Server angewendet
+      - APPLY_INTER_PACKET_TIMES=True
     depends_on:
       - modbus-server
     volumes:
@@ -41,6 +40,7 @@ services:
       - MODBUS_CLIENT_NAME=modbus-client
       - PROXY_SERVER_NAME=proxy-server
       - MODBUS_CLIENT_PORT=3000
+      - APPLY_INTER_PACKET_TIMES=True
     depends_on:
       - proxy-server
     volumes:
@@ -51,23 +51,23 @@ services:
       modbus-network:
         ipv4_address: 172.20.0.12  # Assign a static IP address
   segmentCPaketCapture:
-    image: kaazing/tcpdump
+    image: corfr/tcpdump
     network_mode: "service:modbus-server"
     volumes:
       - modbus-network-data:/tcpdump
-    command: [ "-v", "-i", "eth0", "-s", "0", "-w", "/tcpdump/SegmentC.pcap" ]
+    command: [ "-v", "-i", "eth0", "-s", "0", "-B", "4096", "-w", "/tcpdump/SegmentC.pcap" ]
   segmentAPaketCapture:
-    image: kaazing/tcpdump
+    image: corfr/tcpdump
     network_mode: "service:modbus-client"
     volumes:
       - modbus-network-data:/tcpdump
-    command: [ "-v", "-i", "eth0", "-s", "0", "-w", "/tcpdump/SegmentA.pcap" ]
+    command: [ "-v", "-i", "eth0", "-s", "0", "-B", "4096", "-w", "/tcpdump/SegmentA.pcap" ]
   segmentBPaketCapture:
-    image: kaazing/tcpdump
+    image: corfr/tcpdump
     network_mode: "service:proxy-server"
     volumes:
       - modbus-network-data:/tcpdump
-    command: [ "-v", "-i", "eth0", "-s", "0", "-w", "/tcpdump/SegmentB.pcap" ]
+    command: [ "-v", "-i", "eth0", "-s", "0", "-B", "4096", "-w", "/tcpdump/SegmentB.pcap" ]
 
 
 volumes:
