@@ -6,6 +6,7 @@ services:
       - "502:502"
     environment:
       - MODBUS_SERVER_NAME=modbus-server
+      - APPLY_SIZE_MODULATION=True
     volumes:
       - modbus-network-data:/app/logs
     command: sh -c "./firewall-rules.sh && python StartServer.py > /app/logs/modbus-server.log 2>&1"
@@ -21,7 +22,7 @@ services:
     environment:
       - PROXY_SERVER_NAME=proxy-server
       - MODBUS_SERVER_NAME=modbus-server
-      - APPLY_INTER_PACKET_TIMES=True
+      - APPLY_SIZE_MODULATION=True
     depends_on:
       - modbus-server
     volumes:
@@ -40,7 +41,6 @@ services:
       - MODBUS_CLIENT_NAME=modbus-client
       - PROXY_SERVER_NAME=proxy-server
       - MODBUS_CLIENT_PORT=3000
-      - APPLY_INTER_PACKET_TIMES=True
     depends_on:
       - proxy-server
     volumes:

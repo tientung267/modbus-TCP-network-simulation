@@ -161,6 +161,7 @@ def handle_client(client_socket, server_address):
 
             # Check if we should start the network throttling period
             if rate_limiting.check_in_delay_period():
+                logging.info("Communication is delayed")
                 time.sleep(THROTTLING_TIME)
 
             # Protocol normalisation is applied. Example scenario: in Client the transaction id starts with 1 but in

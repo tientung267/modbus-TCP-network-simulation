@@ -62,13 +62,12 @@ class ReadMsgT1:
     def delay_logic(rtt, function_code, bit_sequence):
         read_msg_changed = False
         # In order to calculate steganography delay, throttling must be known beforehand by message receiver
-        rtt_without_delay = round(rtt - (THROTTLING_TIME if rtt > THROTTLING_TIME else 0) + RTT_VARIANZ, 2)
 
-        if 0.25 <= rtt_without_delay < 0.49 and function_code == 3:
+        if 0.25 <= rtt + RTT_VARIANZ < 0.5 and function_code == 3:
             bit_sequence += '1'
             read_msg_changed = True
 
-        if 0.25 <= rtt_without_delay < 0.49 and function_code == 6:
+        if 0.25 <= rtt + RTT_VARIANZ < 0.5 and function_code == 6:
             bit_sequence += '0'
             read_msg_changed = True
 

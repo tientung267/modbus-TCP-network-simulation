@@ -210,11 +210,11 @@ class ModbusLogAnalyser:
         self.analysing_rtt()
 
 
-clientAnalyser = ModbusLogAnalyser("./NetworktrafficWithoutSteganography/modbus-client.log")
+clientAnalyser = ModbusLogAnalyser("NetworkTrafficWithoutSteganography/modbus-client.log")
 clientAnalyser.run_analysis_on_client_logs()
 logging.info("------------------------------------------------------------------")
-proxyAnalyser = ModbusLogAnalyser("./NetworktrafficWithoutSteganography/proxy-server.log")
+proxyAnalyser = ModbusLogAnalyser("NetworkTrafficWithoutSteganography/proxy-server.log")
 proxyAnalyser.run_analysis_on_proxy_logs()
 logging.info("------------------------------------------------------------------")
-serverAnalyser = ModbusLogAnalyser("./NetworktrafficWithoutSteganography/modbus-server.log")
+serverAnalyser = ModbusLogAnalyser("NetworkTrafficWithoutSteganography/modbus-server.log")
 serverAnalyser.run_analysis_on_server_logs()
