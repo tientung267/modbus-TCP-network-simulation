@@ -22,7 +22,7 @@ services:
     environment:
       - PROXY_SERVER_NAME=proxy-server
       - MODBUS_SERVER_NAME=modbus-server
-      - APPLY_SIZE_MODULATION=True # Bei Default Inter-Packet-Time wird im Proxy-Server angewendet
+      - APPLY_SIZE_MODULATION=True
     depends_on:
       - modbus-server
     volumes:
@@ -51,23 +51,23 @@ services:
       modbus-network:
         ipv4_address: 172.20.0.12  # Assign a static IP address
   segmentCPaketCapture:
-    image: kaazing/tcpdump
+    image: corfr/tcpdump
     network_mode: "service:modbus-server"
     volumes:
       - modbus-network-data:/tcpdump
-    command: [ "-v", "-i", "eth0", "-s", "0", "-w", "/tcpdump/SegmentC.pcap" ]
+    command: [ "-v", "-i", "eth0", "-s", "0", "-B", "4096", "-w", "/tcpdump/SegmentC.pcap" ]
   segmentAPaketCapture:
-    image: kaazing/tcpdump
+    image: corfr/tcpdump
     network_mode: "service:modbus-client"
     volumes:
       - modbus-network-data:/tcpdump
-    command: [ "-v", "-i", "eth0", "-s", "0", "-w", "/tcpdump/SegmentA.pcap" ]
+    command: [ "-v", "-i", "eth0", "-s", "0", "-B", "4096", "-w", "/tcpdump/SegmentA.pcap" ]
   segmentBPaketCapture:
-    image: kaazing/tcpdump
+    image: corfr/tcpdump
     network_mode: "service:proxy-server"
     volumes:
       - modbus-network-data:/tcpdump
-    command: [ "-v", "-i", "eth0", "-s", "0", "-w", "/tcpdump/SegmentB.pcap" ]
+    command: [ "-v", "-i", "eth0", "-s", "0", "-B", "4096", "-w", "/tcpdump/SegmentB.pcap" ]
 
 
 volumes:

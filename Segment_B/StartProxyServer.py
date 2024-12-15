@@ -7,7 +7,7 @@ from ProtocolNormalisation import ProtocolNormalisation
 from RateLimiting import RateLimiting
 from SteganographySizeModulationMethod import S1SizeModulation
 from SteganographyInterPacketTimesMethod import T1InterPacketTimes
-from constants import (SOCKET_TIMEOUTS, NUM_CLIENT, S1_STEG_MESS, T1_STEG_MESS, SLEEP_DURATION, NUM_BITS_CHARACTER,
+from constants import (SOCKET_TIMEOUTS, NUM_CLIENT, S1_STEG_MESS, T1_STEG_MESS, THROTTLING_TIME, NUM_BITS_CHARACTER,
                        NUM_BITS_HEADER, PROXY_SERVER_PORT)
 import logging
 import time
@@ -161,7 +161,8 @@ def handle_client(client_socket, server_address):
 
             # Check if we should start the network throttling period
             if rate_limiting.check_in_delay_period():
-                time.sleep(SLEEP_DURATION)
+                logging.info("Communication is delayed")
+                time.sleep(THROTTLING_TIME)
 
             # Protocol normalisation is applied. Example scenario: in Client the transaction id starts with 1 but in
             # Server the transaction_id starts with 0 -> Protocol must be normalised
