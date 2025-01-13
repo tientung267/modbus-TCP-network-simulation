@@ -11,4 +11,4 @@ DELAY_INTERVAL = 30  # Time in seconds after which delay should be introduced
 DELAY_DURATION = 10  # Time in seconds indicates how long the throttling of the network should take place
 THROTTLING_TIME = 0.07  # Time to delay of a packet in second with network throttling mechanism in proxy-server
 DUMMY_EMBEDDED_BYTE = 0
-PROXY_SERVER_PORT = 502
+PROXY_SERVER_PORT = 1502

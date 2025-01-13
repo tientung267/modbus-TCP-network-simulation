@@ -216,7 +216,7 @@ def handle_client(client_socket, server_address):
     finally:
         close_connection(client_socket, server_socket)
 
-def start_proxy(host='localhost', port=502, server_address=('localhost', 502)):
+def start_proxy(host='localhost', port=1502, server_address=('localhost', 502)):
     """Start the proxy server. Proxy server is a socket, which receives request from Modbus-Client and forwards it
         to the Modbus-Server. The Response from Server back to Client also has to go through proxy server. On the
         Server three mechanism will be applied: Caching, Network throttling in routine and protocol normalisation."""
