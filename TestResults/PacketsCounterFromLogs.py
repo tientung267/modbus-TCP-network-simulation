@@ -27,11 +27,11 @@ class ModbusLogAnalyser:
         logging.info(f"Number of Packet found: {len (transaction_ids_req_str)}" )
 
 
-proxyAnalyser = ModbusLogAnalyser("NetworkTrafficWithoutSteganography/proxy-server.log")
+proxyAnalyser = ModbusLogAnalyser("NetworktrafficWithInterPacketTimes/proxy-server.log")
 proxyAnalyser.PacketCounter()
 logging.info("------------------------------------------------------------------")
-clientAnalyser = ModbusLogAnalyser("NetworkTrafficWithoutSteganography/modbus-client.log")
+clientAnalyser = ModbusLogAnalyser("NetworktrafficWithInterPacketTimes/modbus-client.log")
 clientAnalyser.PacketCounter()
 logging.info("------------------------------------------------------------------")
-serverAnalyser = ModbusLogAnalyser("NetworkTrafficWithoutSteganography/modbus-server.log")
+serverAnalyser = ModbusLogAnalyser("NetworktrafficWithInterPacketTimes/modbus-server.log")
 serverAnalyser.PacketCounter()
