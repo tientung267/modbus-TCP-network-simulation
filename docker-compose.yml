@@ -1,39 +1,21 @@
 services:
-  modbus-server:
-    image: tientungnguyen/modbus-server-image:0.0.1
-    container_name: modbus-server
-    ports:
-      - "502:502"
-    environment:
-      - MODBUS_SERVER_NAME=modbus-server
-      - APPLY_SIZE_MODULATION=True
-    volumes:
-      - modbus-network-data:/app/logs
-    command: sh -c "./firewall-rules.sh && python StartServer.py > /app/logs/modbus-server.log 2>&1"
-    privileged: true
-    networks:
-      modbus-network:
-        ipv4_address: 172.20.0.10  # Assign a static IP address
   proxy-server:
-    image: tientungnguyen/proxy-server-image:0.0.1
+    image: tientungnguyen/proxy-server-image-test:0.0.1
     container_name: proxy-server
     ports:
-      - "1502:502"
+      - "1502:1502"
     environment:
       - PROXY_SERVER_NAME=proxy-server
-      - MODBUS_SERVER_NAME=modbus-server
-      - APPLY_SIZE_MODULATION=True
-    depends_on:
-      - modbus-server
+      - MODBUS_SERVER_NAME=host.docker.internal
     volumes:
       - modbus-network-data:/app/logs
-    command: sh -c "./firewall-rules.sh && python StartProxyServer.py > /app/logs/proxy-server.log 2>&1"
+    command: sh -c "python StartProxyServer.py > /app/logs/proxy-server.log 2>&1"
     privileged: true
     networks:
       modbus-network:
         ipv4_address: 172.20.0.11  # Assign a static IP address
   modbus-client:
-    image: tientungnguyen/modbus-client-image:0.0.1
+    image: tientungnguyen/modbus-client-simulation-test-image:0.0.1
     container_name: modbus-client
     ports:
       - "3000:3000"
@@ -45,17 +27,11 @@ services:
       - proxy-server
     volumes:
       - modbus-network-data:/app/logs
-    command: sh -c "./firewall-rules.sh && python StartClient.py > /app/logs/modbus-client.log 2>&1"
+    command: sh -c "python StartClient.py > /app/logs/modbus-client.log 2>&1"
     privileged: true
     networks:
       modbus-network:
         ipv4_address: 172.20.0.12  # Assign a static IP address
-  segmentCPaketCapture:
-    image: corfr/tcpdump
-    network_mode: "service:modbus-server"
-    volumes:
-      - modbus-network-data:/tcpdump
-    command: [ "-v", "-i", "eth0", "-s", "0", "-B", "4096", "-w", "/tcpdump/SegmentC.pcap" ]
   segmentAPaketCapture:
     image: corfr/tcpdump
     network_mode: "service:modbus-client"
